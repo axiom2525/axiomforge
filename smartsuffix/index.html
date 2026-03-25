@@ -84,6 +84,7 @@
     <button class="nav-btn active" id="btnViewMain" onclick="showView('main')">変換</button>
     <button class="nav-btn" id="btnViewSettings" onclick="showView('settings')">設定</button>
     <button class="nav-btn" id="btnViewTemplate" onclick="showView('template')">テンプレート</button>
+    <button class="nav-btn" id="btnViewHowto" onclick="showView('howto')">使い方</button>
   </nav>
 </header>
 
@@ -183,6 +184,37 @@
   <button class="btn-save" onclick="saveTemplates()">テンプレートを保存</button>
 </div>
 
+<div id="viewHowto" class="sub-view">
+  <div class="setting-group" style="gap:4px;">
+    <div class="setting-label" style="font-size:15px;color:var(--text);font-family:var(--sans);font-weight:700;letter-spacing:0;">SmartSuffixとは</div>
+    <p style="font-size:14px;line-height:1.8;color:var(--text-dim);">入力したテキストに、タイムスタンプ・ハッシュタグ・箇条書きなどを一発で追加できるツールです。SNSへの投稿前やメモ整理に活用できます。登録不要・無料で利用できます。</p>
+  </div>
+  <div class="setting-group">
+    <div class="setting-label">基本的な使い方</div>
+    <ol style="font-size:14px;line-height:2;color:var(--text-dim);padding-left:18px;">
+      <li>「変換」タブで左側の入力欄にテキストを入力または貼り付け</li>
+      <li>適用したいプリセットボタン（タイムスタンプ・ハッシュタグなど）をタップ</li>
+      <li>右側の出力欄に変換結果が表示される</li>
+      <li>「コピー」または「共有」ボタンで結果を使用</li>
+    </ol>
+  </div>
+  <div class="setting-group">
+    <div class="setting-label">プリセット一覧</div>
+    <div style="display:flex;flex-direction:column;gap:10px;margin-top:4px;">
+      <div style="font-size:13px;line-height:1.6;"><strong style="color:var(--text);">🕐 タイムスタンプ</strong><br><span style="color:var(--text-dim);">現在の日時をテキストの上または下に追加。形式は設定で変更可能。</span></div>
+      <div style="font-size:13px;line-height:1.6;"><strong style="color:var(--text);"># ハッシュタグ</strong><br><span style="color:var(--text-dim);">スペース区切りの単語をすべて #タグ形式に変換。</span></div>
+      <div style="font-size:13px;line-height:1.6;"><strong style="color:var(--text);">・箇条書き</strong><br><span style="color:var(--text-dim);">各行の先頭に箇条書き記号を追加。記号は設定で変更可能（・ - → ✓）。</span></div>
+      <div style="font-size:13px;line-height:1.6;"><strong style="color:var(--text);">↵ 改行整形</strong><br><span style="color:var(--text-dim);">スペースまたは句点（。）で区切られた文章を改行に変換。</span></div>
+      <div style="font-size:13px;line-height:1.6;"><strong style="color:var(--text);">❝ 引用</strong><br><span style="color:var(--text-dim);">各行の先頭に引用記号を追加。記号は設定で変更可能（&gt; | #）。</span></div>
+      <div style="font-size:13px;line-height:1.6;"><strong style="color:var(--text);">✦ テンプレート</strong><br><span style="color:var(--text-dim);">「テンプレート」タブで設定した雛形に入力テキストを埋め込む。[TEXT]の位置に挿入される。</span></div>
+    </div>
+  </div>
+  <div class="setting-group">
+    <div class="setting-label">複数プリセットの同時適用</div>
+    <p style="font-size:14px;line-height:1.8;color:var(--text-dim);">プリセットは複数同時に有効にできます。適用順序は固定（改行整形→タイムスタンプ→ハッシュタグ→箇条書き→引用→テンプレート）です。</p>
+  </div>
+</div>
+
 <div class="toast" id="toast"></div>
 
 <script>
@@ -253,10 +285,10 @@ function saveTemplates() {
 
 function showView(v) {
   document.getElementById('viewMain').style.display=v==='main'?'':'none';
-  ['settings','template'].forEach(id=>{
+  ['settings','template','howto'].forEach(id=>{
     document.getElementById('view'+id.charAt(0).toUpperCase()+id.slice(1)).classList.toggle('open',v===id);
   });
-  ['Main','Settings','Template'].forEach(n=>{
+  ['Main','Settings','Template','Howto'].forEach(n=>{
     document.getElementById('btnView'+n).classList.toggle('active',v===n.toLowerCase());
   });
 }
