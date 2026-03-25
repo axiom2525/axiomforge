@@ -57,7 +57,6 @@ button {
 </div>
 <div class="btn-row">
   <button class="btn-dl" onclick="dl()">💾 画像を保存</button>
-  <button class="btn-copy" onclick="copyImg()">📋 画像をコピー</button>
   <button class="btn-x" onclick="shareX()">𝕏 Xでシェア</button>
 </div>
 
@@ -75,6 +74,7 @@ const BUBBLE = { cx: 0.672, cy: 0.475, w: 0.60, h: 0.72 };
 function draw() {
   const txt = document.getElementById('txt').value;
   document.getElementById('cnt').textContent = txt.length + ' / 30';
+  savedFlag = false; // 入力変更でフラグリセット
   if (!ready) return;
   const CW = 600, CH = Math.round(600 * 1024 / 1536);
   const c = document.getElementById('c');
@@ -119,36 +119,31 @@ function splitLines(txt, maxW, maxH, ctx) {
   return { arr:[txt.slice(0,15)+'…'], fs:24 };
 }
 
+let savedFlag = false;
+
 function dl() {
   draw();
   const link = document.createElement('a');
   link.download = 'marmot-scream.png';
   link.href = document.getElementById('c').toDataURL('image/png');
   link.click();
+  savedFlag = true;
 }
 
-// ①画像をクリップボードにコピー
-function copyImg() {
-  draw();
-  document.getElementById('c').toBlob(blob => {
-    try {
-      navigator.clipboard.write([new ClipboardItem({'image/png': blob})])
-        .then(() => toast('画像をコピーしました！Xに貼り付けてね 📋'))
-        .catch(() => toast('コピーできませんでした。保存して使ってね'));
-    } catch(e) {
-      toast('このブラウザはコピー未対応。保存して使ってね');
-    }
-  });
-}
-
-// ②Xの投稿画面をハッシュタグ付きで開く
+// Xでシェア：未保存なら先にダウンロード → X投稿画面を開く
 function shareX() {
-  const txt = document.getElementById('txt').value;
-  const tag = '#叫びマーモット';
-  const text = txt ? `${txt}\n\n${tag}` : tag;
-  const url = 'https://x.com/intent/tweet?text=' + encodeURIComponent(text);
+  if (!savedFlag) {
+    dl();
+    setTimeout(() => openX(), 400);
+  } else {
+    openX();
+  }
+}
+
+function openX() {
+  const url = 'https://x.com/intent/tweet?text=' + encodeURIComponent('#叫びマーモット');
   window.open(url, '_blank');
-  toast('Xが開きます。画像は手動で添付してね');
+  toast('ダウンロードした画像をXに添付してね');
 }
 
 function toast(msg) {
