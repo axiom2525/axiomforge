@@ -4,6 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>叫びマーモット</title>
+<script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-5808591005205512" crossorigin="anonymous"></script>
 <style>
 @font-face {
   font-family: 'Chikara';
@@ -11,6 +12,11 @@
 }
 * { box-sizing: border-box; margin: 0; padding: 0; }
 body { background: #f5f5f0; font-family: 'Chikara', sans-serif; min-height: 100vh; display: flex; flex-direction: column; align-items: center; padding: 20px 16px 48px; }
+.top-nav { width: 100%; max-width: 600px; display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px; }
+.btn-back { background: none; border: 1.5px solid #ccc; color: #555; font-family: sans-serif; font-size: 13px; padding: 7px 14px; border-radius: 8px; cursor: pointer; min-width: auto; flex: none; }
+.btn-back:hover { border-color: #888; color: #222; }
+.btn-pwa { background: none; border: 1.5px solid #3b6ef5; color: #3b6ef5; font-family: sans-serif; font-size: 13px; padding: 7px 14px; border-radius: 8px; cursor: pointer; min-width: auto; flex: none; display: none; }
+.btn-pwa:hover { background: #eef0ff; }
 h1 { font-size: 28px; color: #1a1a1a; margin-bottom: 4px; letter-spacing: 3px; }
 .sub { font-size: 13px; color: #888; margin-bottom: 18px; font-family: sans-serif; }
 .input-area { width: 100%; max-width: 600px; margin-bottom: 14px; }
@@ -46,6 +52,10 @@ button {
 </style>
 </head>
 <body>
+<div class="top-nav">
+  <button class="btn-back" onclick="location.href='/'">← TOPに戻る</button>
+  <button class="btn-pwa" id="btnPwa" onclick="installPwa()">＋ ホーム画面に追加</button>
+</div>
 <h1>叫びマーモット</h1>
 <p class="sub">マーモットに叫ばせよう</p>
 <div class="input-area">
@@ -120,6 +130,23 @@ function splitLines(txt, maxW, maxH, ctx) {
 }
 
 let savedFlag = false;
+
+// PWA
+let deferredPrompt = null;
+window.addEventListener('beforeinstallprompt', e => {
+  e.preventDefault();
+  deferredPrompt = e;
+  document.getElementById('btnPwa').style.display = 'block';
+});
+function installPwa() {
+  if (deferredPrompt) {
+    deferredPrompt.prompt();
+    deferredPrompt.userChoice.then(() => {
+      deferredPrompt = null;
+      document.getElementById('btnPwa').style.display = 'none';
+    });
+  }
+}
 
 function dl() {
   draw();
