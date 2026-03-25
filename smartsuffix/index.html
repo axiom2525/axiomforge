@@ -1,116 +1,332 @@
 <!DOCTYPE html>
 <html lang="ja">
 <head>
-  <meta charset="UTF-8">
-  <title>SmartSuffix</title>
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <style>
-    body {
-      font-family: sans-serif;
-      padding: 16px;
-      background: #f5f5f5;
-    }
-    textarea {
-      width: 100%;
-      height: 120px;
-      margin-bottom: 8px;
-      padding: 8px;
-    }
-    .row {
-      display: flex;
-      gap: 8px;
-      margin-bottom: 8px;
-    }
-    button, label {
-      flex: 1;
-    }
-  </style>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>SmartSuffix</title>
+<link rel="manifest" href="/manifest.json">
+<meta name="theme-color" content="#3b6ef5">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="SmartSuffix">
+<link rel="apple-touch-icon" href="/icon-192.png">
+<link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=Noto+Sans+JP:wght@400;500;700&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #f2f4f8; --surface: #ffffff; --surface2: #eef0f5; --border: #dde1ea;
+    --accent: #3b6ef5; --accent-dim: rgba(59,110,245,0.10);
+    --text: #1a1d26; --text-muted: #9098aa; --text-dim: #6b7280;
+    --mono: 'DM Mono', monospace; --sans: 'Noto Sans JP', sans-serif;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { background: var(--bg); color: var(--text); font-family: var(--sans); min-height: 100vh; display: flex; flex-direction: column; }
+  header { padding: 14px 16px 12px; border-bottom: 1px solid var(--border); display: flex; align-items: center; gap: 10px; background: var(--surface); }
+  .logo { font-family: var(--mono); font-size: 17px; font-weight: 500; color: var(--accent); }
+  .logo span { color: var(--text-muted); }
+  header nav { margin-left: auto; display: flex; gap: 6px; flex-wrap: nowrap; }
+  .nav-btn { background: none; border: 1px solid var(--border); color: var(--text-dim); padding: 6px 10px; border-radius: 6px; font-family: var(--sans); font-size: 12px; cursor: pointer; transition: all 0.15s; white-space: nowrap; }
+  .nav-btn:hover, .nav-btn.active { border-color: var(--accent); color: var(--accent); background: var(--accent-dim); }
+  .install-banner { display: none; background: var(--accent-dim); border-bottom: 1px solid rgba(59,110,245,0.2); padding: 10px 16px; align-items: center; gap: 12px; }
+  .install-banner.show { display: flex; }
+  .install-banner-text { font-size: 13px; flex: 1; color: var(--accent); }
+  .install-banner-text strong { font-weight: 700; }
+  .btn-install { background: var(--accent); color: #fff; border: none; border-radius: 6px; padding: 7px 14px; font-family: var(--sans); font-size: 13px; font-weight: 700; cursor: pointer; white-space: nowrap; }
+  main { flex: 1; display: grid; grid-template-columns: 1fr 1fr; height: calc(100vh - 57px); }
+  .panel { display: flex; flex-direction: column; overflow: hidden; }
+  .panel-left { border-right: 1px solid var(--border); }
+  .panel-header { padding: 12px 16px 10px; border-bottom: 1px solid var(--border); display: flex; align-items: center; gap: 8px; background: var(--surface); }
+  .panel-label { font-family: var(--mono); font-size: 11px; color: var(--text-muted); letter-spacing: 1px; text-transform: uppercase; }
+  .char-count { font-family: var(--mono); font-size: 11px; color: var(--text-muted); margin-left: auto; }
+  textarea { flex: 1; background: transparent; border: none; color: var(--text); font-family: var(--sans); font-size: 15px; line-height: 1.7; padding: 16px; resize: none; outline: none; }
+  textarea::placeholder { color: var(--text-muted); }
+  textarea[readonly] { color: var(--text-dim); }
+  .actions-bar { padding: 10px 16px; border-bottom: 1px solid var(--border); display: flex; gap: 8px; background: var(--surface); }
+  .btn { flex: 1; padding: 9px 0; border-radius: 8px; font-family: var(--sans); font-size: 13px; font-weight: 500; cursor: pointer; transition: all 0.15s; border: none; }
+  .btn-primary { background: var(--accent); color: #ffffff; }
+  .btn-primary:hover { background: #2a55d4; }
+  .btn-ghost { background: var(--surface2); color: var(--text-dim); border: 1px solid var(--border); }
+  .btn-ghost:hover { color: var(--text); border-color: var(--accent-dim); }
+  .presets-bar { padding: 10px 16px; border-top: 1px solid var(--border); display: flex; flex-wrap: wrap; gap: 7px; background: var(--surface); }
+  .preset-btn { background: var(--surface2); border: 1px solid var(--border); color: var(--text-dim); padding: 6px 12px; border-radius: 6px; font-family: var(--sans); font-size: 13px; cursor: pointer; transition: all 0.15s; user-select: none; }
+  .preset-btn:hover { border-color: var(--accent-dim); color: var(--text); }
+  .preset-btn.on { background: var(--accent-dim); border-color: var(--accent); color: var(--accent); font-weight: 500; }
+  .sub-view { display: none; padding: 28px 20px; max-width: 520px; width: 100%; margin: 0 auto; flex-direction: column; gap: 22px; }
+  .sub-view.open { display: flex; }
+  .setting-group { display: flex; flex-direction: column; gap: 8px; }
+  .setting-label { font-size: 12px; color: var(--text-muted); font-family: var(--mono); letter-spacing: 0.5px; }
+  select { background: var(--surface2); border: 1px solid var(--border); color: var(--text); padding: 9px 12px; border-radius: 6px; font-family: var(--sans); font-size: 14px; outline: none; cursor: pointer; width: 100%; }
+  select:focus { border-color: var(--accent); }
+  .toggle-row { display: flex; align-items: center; justify-content: space-between; }
+  .toggle-label { font-size: 14px; color: var(--text); }
+  .toggle { position: relative; width: 44px; height: 24px; }
+  .toggle input { display: none; }
+  .toggle-track { position: absolute; inset: 0; background: var(--surface2); border: 1px solid var(--border); border-radius: 12px; cursor: pointer; transition: all 0.2s; }
+  .toggle-track::after { content: ''; position: absolute; width: 16px; height: 16px; background: var(--text-muted); border-radius: 50%; top: 3px; left: 3px; transition: all 0.2s; }
+  .toggle input:checked + .toggle-track { background: var(--accent-dim); border-color: var(--accent); }
+  .toggle input:checked + .toggle-track::after { background: var(--accent); transform: translateX(20px); }
+  .tpl-input { width: 100%; background: var(--surface2); border: 1px solid var(--border); color: var(--text); padding: 9px 12px; border-radius: 6px; font-family: var(--mono); font-size: 13px; outline: none; }
+  .tpl-input:focus { border-color: var(--accent); }
+  .hint { font-size: 11px; color: var(--text-muted); font-family: var(--mono); }
+  .btn-save { background: var(--accent); color: #ffffff; border: none; padding: 12px; border-radius: 8px; font-family: var(--sans); font-size: 14px; font-weight: 700; cursor: pointer; width: 100%; }
+  .btn-save:hover { background: #2a55d4; }
+  .toast { position: fixed; bottom: 32px; left: 50%; transform: translateX(-50%) translateY(20px); background: var(--surface); border: 1px solid var(--border); color: var(--text); padding: 12px 24px; border-radius: 8px; font-size: 14px; opacity: 0; transition: all 0.2s; pointer-events: none; z-index: 200; white-space: nowrap; box-shadow: 0 4px 20px rgba(0,0,0,0.08); }
+  .toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+  @media (max-width: 640px) {
+    main { grid-template-columns: 1fr; grid-template-rows: auto auto; height: auto; min-height: calc(100vh - 57px); }
+    .panel-left { border-right: none; border-bottom: 1px solid var(--border); }
+    .panel { min-height: 260px; }
+  }
+</style>
 </head>
 <body>
+<header>
+  <div class="logo">Smart<span>Suffix</span></div>
+  <nav>
+    <button class="nav-btn active" id="btnViewMain" onclick="showView('main')">変換</button>
+    <button class="nav-btn" id="btnViewSettings" onclick="showView('settings')">設定</button>
+    <button class="nav-btn" id="btnViewTemplate" onclick="showView('template')">テンプレート</button>
+  </nav>
+</header>
 
-<h2>SmartSuffix</h2>
-
-<textarea id="input" placeholder="テキスト入力"></textarea>
-
-<div class="row">
-  <label><input type="checkbox" id="timestamp">日時</label>
-  <label><input type="checkbox" id="hashtag">#タグ</label>
-  <label><input type="checkbox" id="bullet">箇条</label>
+<div class="install-banner" id="installBanner">
+  <div class="install-banner-text"><strong>ホーム画面に追加</strong>するとアプリとして使えます</div>
+  <button class="btn-install" onclick="triggerInstall()">追加する</button>
 </div>
 
-<div class="row">
-  <label><input type="checkbox" id="linebreak">改行</label>
-  <label><input type="checkbox" id="quote">引用</label>
-  <label><input type="checkbox" id="template">自由</label>
+<main id="viewMain">
+  <div class="panel panel-left">
+    <div class="panel-header">
+      <span class="panel-label">INPUT</span>
+      <span class="char-count" id="inputCount">0文字</span>
+    </div>
+    <textarea id="etInput" placeholder="テキストを入力、または貼り付け…" oninput="onInputChange()"></textarea>
+    <div class="presets-bar">
+      <button class="preset-btn" id="btnTimestamp" onclick="togglePreset('timestamp')">🕐 タイムスタンプ</button>
+      <button class="preset-btn" id="btnHashtag" onclick="togglePreset('hashtag')"># ハッシュタグ</button>
+      <button class="preset-btn" id="btnBullet" onclick="togglePreset('bullet')">・箇条書き</button>
+      <button class="preset-btn" id="btnLinebreak" onclick="togglePreset('linebreak')">↵ 改行整形</button>
+      <button class="preset-btn" id="btnQuote" onclick="togglePreset('quote')">❝ 引用</button>
+      <button class="preset-btn" id="btnFree1" onclick="togglePreset('free1')">✦ テンプレート</button>
+    </div>
+  </div>
+  <div class="panel">
+    <div class="actions-bar">
+      <button class="btn btn-primary" onclick="copyOutput()">📋 コピー</button>
+      <button class="btn btn-ghost" onclick="shareOutput()">📤 共有</button>
+      <button class="btn btn-ghost" onclick="resetAll()">↺ リセット</button>
+    </div>
+    <div class="panel-header">
+      <span class="panel-label">OUTPUT</span>
+      <span class="char-count" id="outputCount">0文字</span>
+    </div>
+    <textarea id="etOutput" readonly placeholder="変換結果がここに出ます"></textarea>
+  </div>
+</main>
+
+<div id="viewSettings" class="sub-view">
+  <div class="setting-group">
+    <div class="setting-label">タイムスタンプの形式</div>
+    <select id="settingTimestampFormat">
+      <option>yyyy/MM/dd HH:mm</option>
+      <option>yyyy-MM-dd HH:mm</option>
+      <option>MM/dd HH:mm</option>
+      <option>HH:mm</option>
+    </select>
+  </div>
+  <div class="setting-group">
+    <div class="setting-label">タイムスタンプの位置</div>
+    <select id="settingTimestampPos">
+      <option>テキストの上</option>
+      <option>テキストの下</option>
+    </select>
+  </div>
+  <div class="setting-group">
+    <div class="setting-label">箇条書きの記号</div>
+    <select id="settingBullet">
+      <option>・</option>
+      <option>-</option>
+      <option>→</option>
+      <option>✓</option>
+    </select>
+  </div>
+  <div class="setting-group">
+    <div class="setting-label">引用の記号</div>
+    <select id="settingQuote">
+      <option>&gt; </option>
+      <option>&gt;&gt; </option>
+      <option>| </option>
+      <option># </option>
+    </select>
+  </div>
+  <div class="setting-group">
+    <div class="setting-label">改行の区切り文字</div>
+    <select id="settingLinebreak">
+      <option>スペース</option>
+      <option>。（句点）</option>
+    </select>
+  </div>
+  <div class="toggle-row">
+    <span class="toggle-label">URLを除去する</span>
+    <label class="toggle">
+      <input type="checkbox" id="settingRemoveUrl">
+      <div class="toggle-track"></div>
+    </label>
+  </div>
+  <button class="btn-save" onclick="saveSettings()">設定を保存</button>
 </div>
 
-<textarea id="output" placeholder="変換結果"></textarea>
-
-<div class="row">
-  <button onclick="copyText()">コピー</button>
-  <button onclick="resetText()">リセット</button>
+<div id="viewTemplate" class="sub-view">
+  <div class="setting-group">
+    <div class="setting-label">自由テンプレート</div>
+    <input class="tpl-input" type="text" id="tpl1" placeholder="例：【メモ】[TEXT]">
+    <div class="hint">※ [TEXT] の位置に入力テキストが挿入されます</div>
+  </div>
+  <button class="btn-save" onclick="saveTemplates()">テンプレートを保存</button>
 </div>
+
+<div class="toast" id="toast"></div>
 
 <script>
-const input = document.getElementById("input");
-const output = document.getElementById("output");
+const STORAGE_KEY = 'smartsuffix_settings';
+let cfg = {
+  timestampFormat:'yyyy/MM/dd HH:mm', timestampPos:'テキストの上',
+  bulletChar:'・', quoteChar:'> ', linebreakChar:'スペース',
+  removeUrl:false, freeTemplate1:'[TEXT]'
+};
+let on = {timestamp:false,hashtag:false,bullet:false,linebreak:false,quote:false,free1:false};
 
-const checkboxes = document.querySelectorAll("input[type=checkbox]");
-checkboxes.forEach(cb => cb.addEventListener("change", apply));
+// PWA
+let deferredPrompt = null;
+const isInstalled = () => window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone === true;
 
-input.addEventListener("input", apply);
+window.addEventListener('beforeinstallprompt', e => {
+  e.preventDefault();
+  deferredPrompt = e;
+  if (!isInstalled()) document.getElementById('installBanner').classList.add('show');
+});
+
+window.addEventListener('appinstalled', () => {
+  document.getElementById('installBanner').classList.remove('show');
+  deferredPrompt = null;
+});
+
+function triggerInstall() {
+  if (deferredPrompt) {
+    deferredPrompt.prompt();
+    deferredPrompt.userChoice.then(() => { deferredPrompt = null; });
+  }
+}
+
+function checkInstallAndAct(action) {
+  if (!isInstalled()) {
+    toast('ホーム画面に追加すると、より快適に使えます ✚');
+  }
+  action();
+}
+
+function load() {
+  try { const s=localStorage.getItem(STORAGE_KEY); if(s) cfg={...cfg,...JSON.parse(s)}; } catch(e){}
+  document.getElementById('settingTimestampFormat').value=cfg.timestampFormat;
+  document.getElementById('settingTimestampPos').value=cfg.timestampPos;
+  document.getElementById('settingBullet').value=cfg.bulletChar;
+  document.getElementById('settingQuote').value=cfg.quoteChar;
+  document.getElementById('settingLinebreak').value=cfg.linebreakChar;
+  document.getElementById('settingRemoveUrl').checked=cfg.removeUrl;
+  document.getElementById('tpl1').value=cfg.freeTemplate1;
+}
+
+function save() { localStorage.setItem(STORAGE_KEY,JSON.stringify(cfg)); }
+
+function saveSettings() {
+  cfg.timestampFormat=document.getElementById('settingTimestampFormat').value;
+  cfg.timestampPos=document.getElementById('settingTimestampPos').value;
+  cfg.bulletChar=document.getElementById('settingBullet').value;
+  cfg.quoteChar=document.getElementById('settingQuote').value;
+  cfg.linebreakChar=document.getElementById('settingLinebreak').value;
+  cfg.removeUrl=document.getElementById('settingRemoveUrl').checked;
+  save(); toast('設定を保存しました'); apply();
+}
+
+function saveTemplates() {
+  cfg.freeTemplate1=document.getElementById('tpl1').value;
+  save(); toast('テンプレートを保存しました'); apply();
+}
+
+function showView(v) {
+  document.getElementById('viewMain').style.display=v==='main'?'':'none';
+  ['settings','template'].forEach(id=>{
+    document.getElementById('view'+id.charAt(0).toUpperCase()+id.slice(1)).classList.toggle('open',v===id);
+  });
+  ['Main','Settings','Template'].forEach(n=>{
+    document.getElementById('btnView'+n).classList.toggle('active',v===n.toLowerCase());
+  });
+}
+
+function togglePreset(k) {
+  on[k]=!on[k];
+  document.getElementById('btn'+k.charAt(0).toUpperCase()+k.slice(1)).classList.toggle('on',on[k]);
+  apply();
+}
+
+function onInputChange() {
+  document.getElementById('inputCount').textContent=document.getElementById('etInput').value.length+'文字';
+  apply();
+}
+
+function ts(fmt) {
+  const n=new Date(), p=x=>String(x).padStart(2,'0');
+  return fmt.replace('yyyy',n.getFullYear()).replace('MM',p(n.getMonth()+1)).replace('dd',p(n.getDate())).replace('HH',p(n.getHours())).replace('mm',p(n.getMinutes()));
+}
 
 function apply() {
-  let text = input.value;
-
-  // 改行
-  if (linebreak.checked) {
-    text = text.replace(/\s+/g, "\n");
-  }
-
-  // タイムスタンプ
-  if (timestamp.checked) {
-    const now = new Date();
-    const t = now.toLocaleString("ja-JP");
-    text = t + "\n" + text;
-  }
-
-  // ハッシュタグ
-  if (hashtag.checked) {
-    text = text.split("\n").map(line =>
-      line.split(/\s+/).map(w => "#" + w).join(" ")
-    ).join("\n");
-  }
-
-  // 箇条書き
-  if (bullet.checked) {
-    text = text.split("\n").map(line => "・" + line).join("\n");
-  }
-
-  // 引用
-  if (quote.checked) {
-    text = text.split("\n").map(line => "> " + line).join("\n");
-  }
-
-  // テンプレ
-  if (template.checked) {
-    const tpl = "[TEXT]";
-    text = tpl.replace("[TEXT]", text);
-  }
-
-  output.value = text;
+  let t=document.getElementById('etInput').value;
+  if(cfg.removeUrl) t=t.replace(/https?:\/\/\S+/g,'').trim();
+  if(on.linebreak) t=t.split(cfg.linebreakChar==='スペース'?/\s+/:/。/).filter(s=>s.trim()).join('\n');
+  if(on.timestamp){ const s=ts(cfg.timestampFormat); t=cfg.timestampPos==='テキストの上'?s+'\n'+t:t+'\n'+s; }
+  if(on.hashtag) t=t.split('\n').map(l=>l.trim().split(/\s+/).filter(w=>w).map(w=>'#'+w).join(' ')).join('\n');
+  if(on.bullet) t=t.split('\n').map(l=>cfg.bulletChar+l).join('\n');
+  if(on.quote) t=t.split('\n').map(l=>cfg.quoteChar+l).join('\n');
+  if(on.free1){ const tp=cfg.freeTemplate1; t=tp.includes('[TEXT]')?tp.replace('[TEXT]',t):t; }
+  document.getElementById('etOutput').value=t;
+  document.getElementById('outputCount').textContent=t.length+'文字';
 }
 
-function copyText() {
-  navigator.clipboard.writeText(output.value);
-  alert("コピーした");
+function copyOutput() {
+  checkInstallAndAct(() => {
+    const t=document.getElementById('etOutput').value;
+    if(!t)return;
+    navigator.clipboard.writeText(t).then(()=>toast('コピーしました ✓'));
+  });
 }
 
-function resetText() {
-  output.value = input.value;
-  checkboxes.forEach(cb => cb.checked = false);
+function shareOutput() {
+  checkInstallAndAct(() => {
+    const t=document.getElementById('etOutput').value;
+    if(!t)return;
+    if(navigator.share){ navigator.share({text:t}); }
+    else{ navigator.clipboard.writeText(t).then(()=>toast('クリップボードにコピーしました')); }
+  });
 }
+
+function resetAll() {
+  ['etInput','etOutput'].forEach(id=>document.getElementById(id).value='');
+  document.getElementById('inputCount').textContent='0文字';
+  document.getElementById('outputCount').textContent='0文字';
+  Object.keys(on).forEach(k=>{ on[k]=false; const b=document.getElementById('btn'+k.charAt(0).toUpperCase()+k.slice(1)); if(b)b.classList.remove('on'); });
+}
+
+function toast(msg) {
+  const el=document.getElementById('toast');
+  el.textContent=msg; el.classList.add('show');
+  setTimeout(()=>el.classList.remove('show'),2500);
+}
+
+const p=new URLSearchParams(window.location.search);
+const st=p.get('text')||p.get('shared');
+if(st){ document.getElementById('etInput').value=st.replace(/"/g,''); onInputChange(); }
+
+if('serviceWorker' in navigator){ navigator.serviceWorker.register('/sw.js'); }
+
+load();
 </script>
-
 </body>
 </html>
