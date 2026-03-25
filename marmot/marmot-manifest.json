@@ -1,0 +1,14 @@
+{
+  "name": "叫びマーモット",
+  "short_name": "叫びマーモット",
+  "description": "マーモットに叫ばせよう",
+  "start_url": "/marmot/",
+  "scope": "/marmot/",
+  "display": "standalone",
+  "background_color": "#f5f5f0",
+  "theme_color": "#1a1a1a",
+  "icons": [
+    { "src": "/marmot/marmot-icon-192.png", "sizes": "192x192", "type": "image/png" },
+    { "src": "/marmot/marmot-icon-512.png", "sizes": "512x512", "type": "image/png" }
+  ]
+}
