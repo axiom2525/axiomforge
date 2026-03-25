@@ -5,6 +5,11 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>叫びマーモット</title>
 <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-5808591005205512" crossorigin="anonymous"></script>
+<link rel="manifest" href="/marmot/marmot-manifest.json">
+<meta name="theme-color" content="#1a1a1a">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="叫びマーモット">
+<link rel="apple-touch-icon" href="/marmot/marmot-icon-192.png">
 <style>
 @font-face {
   font-family: 'Chikara';
@@ -15,7 +20,7 @@ body { background: #f5f5f0; font-family: 'Chikara', sans-serif; min-height: 100v
 .top-nav { width: 100%; max-width: 600px; display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px; }
 .btn-back { background: none; border: 1.5px solid #ccc; color: #555; font-family: sans-serif; font-size: 13px; padding: 7px 14px; border-radius: 8px; cursor: pointer; min-width: auto; flex: none; }
 .btn-back:hover { border-color: #888; color: #222; }
-.btn-pwa { background: none; border: 1.5px solid #3b6ef5; color: #3b6ef5; font-family: sans-serif; font-size: 13px; padding: 7px 14px; border-radius: 8px; cursor: pointer; min-width: auto; flex: none; display: none; }
+.btn-pwa { background: none; border: 1.5px solid #3b6ef5; color: #3b6ef5; font-family: sans-serif; font-size: 13px; padding: 7px 14px; border-radius: 8px; cursor: pointer; min-width: auto; flex: none; }
 .btn-pwa:hover { background: #eef0ff; }
 h1 { font-size: 28px; color: #1a1a1a; margin-bottom: 4px; letter-spacing: 3px; }
 .sub { font-size: 13px; color: #888; margin-bottom: 18px; font-family: sans-serif; }
@@ -136,16 +141,17 @@ let deferredPrompt = null;
 window.addEventListener('beforeinstallprompt', e => {
   e.preventDefault();
   deferredPrompt = e;
-  document.getElementById('btnPwa').style.display = 'block';
 });
 function installPwa() {
   if (deferredPrompt) {
     deferredPrompt.prompt();
-    deferredPrompt.userChoice.then(() => {
-      deferredPrompt = null;
-      document.getElementById('btnPwa').style.display = 'none';
-    });
+    deferredPrompt.userChoice.then(() => { deferredPrompt = null; });
+  } else {
+    toast('ブラウザの右上メニュー →「ホーム画面に追加」から追加してね');
   }
+}
+if ('serviceWorker' in navigator) {
+  navigator.serviceWorker.register('/marmot/marmot-sw.js');
 }
 
 function dl() {
