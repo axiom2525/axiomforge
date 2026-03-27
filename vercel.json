@@ -1,0 +1,16 @@
+{
+  "headers": [
+    {
+      "source": "/(.*)\\.wav",
+      "headers": [
+        { "key": "Content-Type", "value": "audio/wav" }
+      ]
+    },
+    {
+      "source": "/(.*)\\.mp3",
+      "headers": [
+        { "key": "Content-Type", "value": "audio/mpeg" }
+      ]
+    }
+  ]
+}
