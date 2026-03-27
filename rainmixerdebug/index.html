@@ -48,65 +48,56 @@ select { background:#222; color:#aaa; border:1px solid #444; padding:3px 2px; fo
 
 <script>
 const BASE = '/rainmixerdebug/';
+const FADE = 2.0; // クロスフェード秒数
+
 const files = [
   {f:'Firefly_audio_gusty_wind_sound_variation1.wav',d:'突風・強風 v1',lv:4},
-  {f:'Firefly_audio_gusty_wind_sound_variation2.wav',d:'突風・強風 v2',lv:3},
   {f:'Firefly_audio_light_rain_falling_softly,_gentle_raindrops,_natur_variation1.wav',d:'やさしい雨 v1',lv:3},
   {f:'Firefly_audio_light_rain_falling_softly,_gentle_raindrops,_natur_variation2.wav',d:'やさしい雨 v2',lv:2},
   {f:'Firefly_audio_light_rain_falling_softly,_gentle_raindrops,_natur_variation3.wav',d:'やさしい雨 v3',lv:4},
   {f:'Firefly_audio_light_rain_falling_softly,_gentle_raindrops,_natur_variation4.wav',d:'やさしい雨 v4',lv:2},
   {f:'Firefly_audio_rain_hitting_asphalt_sound_variation1.wav',d:'アスファルト v1',lv:5},
   {f:'Firefly_audio_rain_hitting_asphalt_sound_variation2.wav',d:'アスファルト v2',lv:4},
-  {f:'Firefly_audio_rain_hitting_asphalt_sound_variation3.wav',d:'アスファルト v3',lv:3},
-  {f:'Firefly_audio_rain_hitting_asphalt_sound_variation4.wav',d:'アスファルト v4',lv:2},
   {f:'Firefly_audio_rain_hitting_metal_roof_sound_variation1.wav',d:'金属屋根 v1',lv:5},
   {f:'Firefly_audio_rain_hitting_metal_roof_sound_variation2.wav',d:'金属屋根 v2',lv:3},
-  {f:'Firefly_audio_rain_hitting_metal_roof_sound_variation3.wav',d:'金属屋根 v3',lv:2},
-  {f:'Firefly_audio_rain_hitting_metal_roof_sound_variation4.wav',d:'金属屋根 v4',lv:2},
   {f:'Firefly_audio_rain_hitting_puddles_sound_variation1.wav',d:'水たまり v1',lv:5},
   {f:'Firefly_audio_rain_hitting_puddles_sound_variation2.wav',d:'水たまり v2',lv:4},
   {f:'Firefly_audio_rain_hitting_puddles_sound_variation3.wav',d:'水たまり v3',lv:2},
-  {f:'Firefly_audio_rain_hitting_puddles_sound_variation4.wav',d:'水たまり v4',lv:2},
   {f:'Firefly_audio_rain_hitting_tent_fabric_sound_variation1.wav',d:'テント v1',lv:5},
-  {f:'Firefly_audio_rain_hitting_tent_fabric_sound_variation2.wav',d:'テント v2',lv:4},
   {f:'Firefly_audio_rain_hitting_tent_fabric_sound_variation3.wav',d:'テント v3',lv:3},
-  {f:'Firefly_audio_rain_hitting_tent_fabric_sound_variation4.wav',d:'テント v4',lv:2},
-  {f:'Firefly_audio_rain_sound_heard_from_inside_a_car_variation1.wav',d:'車内 v1',lv:5},
-  {f:'Firefly_audio_rain_sound_heard_from_inside_a_car_variation2.wav',d:'車内 v2',lv:3},
-  {f:'Firefly_audio_rain_sound_heard_from_inside_a_car_variation3.wav',d:'車内 v3',lv:3},
-  {f:'Firefly_audio_rain_sound_heard_from_inside_a_car_variation4.wav',d:'車内 v4',lv:2},
   {f:'Firefly_audio_sound_of_thunder_variation1.wav',d:'遠雷 v1',lv:5},
   {f:'Firefly_audio_sound_of_thunder_variation2.wav',d:'遠雷 v2',lv:4},
-  {f:'Firefly_audio_sound_of_thunder_variation3.wav',d:'遠雷 v3',lv:2},
-  {f:'Firefly_audio_sound_of_thunder_variation4.wav',d:'遠雷 v4',lv:2},
   {f:'Firefly_audio_thunderclap_variation1.wav',d:'雷鳴 v1',lv:5},
   {f:'Firefly_audio_thunderclap_variation2.wav',d:'雷鳴 v2',lv:3},
   {f:'Firefly_audio_thunderclap_variation3.wav',d:'雷鳴 v3',lv:2},
   {f:'Firefly_audio_whistling_wind_sound_variation1.wav',d:'ヒュー風 v1',lv:5},
   {f:'Firefly_audio_whistling_wind_sound_variation4.wav',d:'ヒュー風 v4',lv:4},
-  {f:'myedit_ai_sfx_0327082100.mp3',d:'myedit AI #1',lv:2},
-  {f:'myedit_ai_sfx_0327082102.mp3',d:'myedit AI #2',lv:2},
-  {f:'myedit_ai_sfx_0327082103.mp3',d:'myedit AI #3',lv:1},
-  {f:'myedit_ai_sfx_0327082329.mp3',d:'myedit AI #4',lv:1},
-  {f:'myedit_ai_sfx_0327082521.mp3',d:'myedit AI #5',lv:3},
 ];
 
 const RAND_SEC = [0,30,60,90,120,180];
 const RAND_LBL = ['0(なし)','1(30s)','2(60s)','3(90s)','4(2m)','5(3m)'];
-const audios = [];
-const randTimers = [];
+
+// Web Audio APIでクロスフェード対応
+let actx = null;
+function getCtx() {
+  if (!actx) actx = new (window.AudioContext || window.webkitAudioContext)();
+  return actx;
+}
+
+// 各トラックの状態
+const tracks = files.map(() => ({
+  audioA: null, audioB: null,
+  gainA: null, gainB: null,
+  sourceA: null, sourceB: null,
+  vol: 0, rand: 0, randTimer: null,
+  active: 'A', fadeTimer: null
+}));
 
 function lvC(n){return['','lvl-1','lvl-2','lvl-3','lvl-4','lvl-5'][n];}
 
 function build() {
   const c = document.getElementById('rows');
-  files.forEach((it,i) => {
-    const audio = new Audio(BASE + it.f);
-    audio.loop = true;
-    audio.preload = 'none';
-    audios[i] = audio;
-    randTimers[i] = null;
-
+  files.forEach((it, i) => {
     const row = document.createElement('div');
     row.className = 'row'; row.id = 'r'+i;
     const stars = '★'.repeat(it.lv)+'☆'.repeat(5-it.lv);
@@ -125,34 +116,111 @@ function build() {
   });
 }
 
+function getOrCreateTrack(i) {
+  const t = tracks[i];
+  const ctx = getCtx();
+  const url = BASE + files[i].f;
+
+  function makeAudio(gain) {
+    const a = new Audio(url);
+    a.loop = false;
+    a.crossOrigin = 'anonymous';
+    const src = ctx.createMediaElementSource(a);
+    src.connect(gain);
+    return a;
+  }
+
+  if (!t.gainA) {
+    t.gainA = ctx.createGain(); t.gainA.gain.value = 0; t.gainA.connect(ctx.destination);
+    t.gainB = ctx.createGain(); t.gainB.gain.value = 0; t.gainB.connect(ctx.destination);
+    t.audioA = makeAudio(t.gainA);
+    t.audioB = makeAudio(t.gainB);
+
+    // ループクロスフェード
+    t.audioA.addEventListener('timeupdate', () => scheduleXfade(i, 'A'));
+    t.audioB.addEventListener('timeupdate', () => scheduleXfade(i, 'B'));
+  }
+  return t;
+}
+
+function scheduleXfade(i, which) {
+  const t = tracks[i];
+  if (t.vol === 0) return;
+  if (t.active !== which) return;
+  const audio = which === 'A' ? t.audioA : t.audioB;
+  if (!audio.duration || audio.duration <= 0) return;
+  const remaining = audio.duration - audio.currentTime;
+  if (remaining > FADE || remaining <= 0) return;
+
+  // クロスフェード開始
+  const ctx = getCtx();
+  const target = which === 'A' ? 'B' : 'A';
+  const audioNext = target === 'A' ? t.audioA : t.audioB;
+  const gainCur = which === 'A' ? t.gainA : t.gainB;
+  const gainNext = target === 'A' ? t.gainA : t.gainB;
+  const vol = t.vol / 100;
+
+  // 次のオーディオを頭から再生
+  audioNext.currentTime = 0;
+  audioNext.play().catch(()=>{});
+  gainNext.gain.setValueAtTime(0, ctx.currentTime);
+  gainNext.gain.linearRampToValueAtTime(vol, ctx.currentTime + remaining);
+  gainCur.gain.setValueAtTime(vol, ctx.currentTime);
+  gainCur.gain.linearRampToValueAtTime(0, ctx.currentTime + remaining);
+
+  t.active = target;
+}
+
 function setVol(i, v) {
-  const a = audios[i];
-  a.volume = v / 100;
+  tracks[i].vol = v;
   document.getElementById('n'+i).firstChild.nodeValue = v;
-  const dot = document.getElementById('d'+i);
-  const row = document.getElementById('r'+i);
+  const ctx = getCtx();
+  const t = getOrCreateTrack(i);
+  const gainCur = t.active === 'A' ? t.gainA : t.gainB;
+  const audioCur = t.active === 'A' ? t.audioA : t.audioB;
+
+  gainCur.gain.cancelScheduledValues(ctx.currentTime);
+  gainCur.gain.setValueAtTime(v/100, ctx.currentTime);
+
   if (v >= 1) {
-    if (a.paused) a.play().catch(()=>{});
-    dot.style.display='inline'; row.classList.add('playing');
+    if (audioCur.paused) audioCur.play().catch(()=>{});
+    document.getElementById('d'+i).style.display = 'inline';
+    document.getElementById('r'+i).classList.add('playing');
   } else {
-    a.pause(); a.currentTime=0;
-    dot.style.display='none'; row.classList.remove('playing');
+    t.audioA.pause(); t.audioA.currentTime = 0;
+    t.audioB.pause(); t.audioB.currentTime = 0;
+    t.gainA.gain.setValueAtTime(0, ctx.currentTime);
+    t.gainB.gain.setValueAtTime(0, ctx.currentTime);
+    t.active = 'A';
+    document.getElementById('d'+i).style.display = 'none';
+    document.getElementById('r'+i).classList.remove('playing');
   }
 }
 
 function setRand(i, v) {
-  if (randTimers[i]) { clearInterval(randTimers[i]); randTimers[i]=null; }
+  const t = tracks[i];
+  t.rand = v;
+  if (t.randTimer) { clearInterval(t.randTimer); t.randTimer = null; }
   if (!v) return;
-  randTimers[i] = setInterval(()=>fireRand(i), RAND_SEC[v]*1000);
+  t.randTimer = setInterval(() => fireRand(i), RAND_SEC[v]*1000);
 }
 
 function fireRand(i) {
-  const a = audios[i];
-  const curVol = parseFloat(document.getElementById('s'+i).value);
-  if (curVol > 0) return;
-  a.volume = 0.6; a.currentTime=0;
-  a.play().catch(()=>{});
-  setTimeout(()=>{ if (+document.getElementById('s'+i).value===0){ a.pause(); a.volume=0; } }, 8000);
+  if (tracks[i].vol > 0) return;
+  const t = getOrCreateTrack(i);
+  const ctx = getCtx();
+  const gain = t.gainA;
+  const audio = t.audioA;
+  audio.currentTime = 0;
+  gain.gain.setValueAtTime(0, ctx.currentTime);
+  gain.gain.linearRampToValueAtTime(0.6, ctx.currentTime + 1.0);
+  audio.play().catch(()=>{});
+  setTimeout(() => {
+    if (tracks[i].vol === 0) {
+      gain.gain.linearRampToValueAtTime(0, ctx.currentTime + 2.0);
+      setTimeout(() => { if(tracks[i].vol===0) audio.pause(); }, 2500);
+    }
+  }, 6000);
 }
 
 build();
