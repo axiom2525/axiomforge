@@ -6,178 +6,185 @@
 <title>雨音ミキサー デバッグ</title>
 <style>
 * { box-sizing: border-box; margin: 0; padding: 0; }
-body { font-family: monospace; background: #111; color: #ddd; padding: 16px; font-size: 13px; }
-h1 { color: #7cf; margin-bottom: 12px; font-size: 16px; }
+body { font-family: monospace; background: #111; color: #ddd; font-size: 13px; }
+h1 { color: #7cf; padding: 12px 16px 8px; font-size: 15px; border-bottom: 1px solid #333; }
+.unlock-btn {
+  display: block; width: 100%; padding: 14px;
+  background: #1a3a5a; color: #7cf; font-size: 15px;
+  border: none; cursor: pointer; text-align: center;
+  border-bottom: 1px solid #333;
+}
+.unlock-btn.done { background: #0a1a0a; color: #0f0; }
 .grid-header {
   display: grid;
-  grid-template-columns: 2fr 2fr 60px 80px 100px 80px;
-  gap: 4px;
-  padding: 6px 4px;
-  background: #222;
-  color: #888;
-  font-size: 11px;
+  grid-template-columns: 1fr 80px 90px 90px 80px;
+  gap: 4px; padding: 6px 8px;
+  background: #1a1a1a; color: #666; font-size: 11px;
   border-bottom: 1px solid #333;
   position: sticky; top: 0; z-index: 10;
 }
 .row {
   display: grid;
-  grid-template-columns: 2fr 2fr 60px 80px 100px 80px;
-  gap: 4px;
-  padding: 5px 4px;
+  grid-template-columns: 1fr 80px 90px 90px 80px;
+  gap: 4px; padding: 8px 8px;
   border-bottom: 1px solid #1e1e1e;
   align-items: center;
 }
-.row:hover { background: #181818; }
 .row.playing { background: #0a1a0a; }
-.fname { color: #adf; word-break: break-all; font-size: 11px; }
-.desc { color: #999; font-size: 11px; }
-.level { text-align: center; }
-.lvl-5 { color: #0f0; }
-.lvl-4 { color: #9f0; }
-.lvl-3 { color: #ff0; }
-.lvl-2 { color: #f90; }
-.lvl-1 { color: #f00; }
-.mixer-wrap { display: flex; align-items: center; gap: 6px; }
-input[type=range] { width: 60px; accent-color: #7cf; }
-.vol-num { color: #7cf; width: 28px; text-align: right; font-size: 12px; }
-select { background: #222; color: #aaa; border: 1px solid #444; padding: 2px 4px; font-size: 11px; border-radius: 3px; }
-.status { font-size: 10px; color: #555; margin-top: 2px; }
-.playing-dot { color: #0f0; font-size: 10px; }
+.info { min-width: 0; }
+.fname {
+  color: #7af; font-size: 11px;
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+  cursor: pointer;
+}
+.fname:active { white-space: normal; word-break: break-all; }
+.desc { color: #888; font-size: 11px; margin-top: 2px; }
+.level { text-align: center; font-size: 12px; }
+.lvl-5 { color: #0f0; } .lvl-4 { color: #9f0; } .lvl-3 { color: #ff0; }
+.lvl-2 { color: #f90; } .lvl-1 { color: #f44; }
+.mixer-wrap { display: flex; flex-direction: column; align-items: center; gap: 3px; }
+input[type=range] { width: 72px; accent-color: #7cf; }
+.vol-num { color: #7cf; font-size: 13px; font-weight: bold; text-align: center; }
+.dot { color: #0f0; font-size: 10px; }
+select {
+  background: #222; color: #aaa; border: 1px solid #444;
+  padding: 3px 2px; font-size: 11px; border-radius: 3px; width: 76px;
+}
 </style>
 </head>
 <body>
 <h1>🌧 雨音ミキサー デバッグ</h1>
+<button class="unlock-btn" id="unlockBtn" onclick="unlockAudio()">▶ タップして音声を有効化</button>
 <div class="grid-header">
-  <div>ファイル名</div>
-  <div>説明</div>
-  <div>レベル</div>
-  <div>ボリューム</div>
-  <div>音量(0-100)</div>
+  <div>ファイル / 説明</div>
+  <div style="text-align:center">レベル</div>
+  <div style="text-align:center">音量</div>
+  <div style="text-align:center">音量値</div>
   <div>ランダム</div>
 </div>
 <div id="rows"></div>
 
 <script>
 const BASE = './';
-
 const files = [
-  { f:'Firefly_audio_gusty_wind_sound_variation1.wav', d:'突風・強風ノイズ variation1', lv:4 },
-  { f:'Firefly_audio_gusty_wind_sound_variation2.wav', d:'突風・強風ノイズ variation2', lv:3 },
-  { f:'Firefly_audio_light_rain_falling_softly,_gentle_raindrops,_natur_variation1.wav', d:'やさしい雨・遠距離系 variation1', lv:3 },
-  { f:'Firefly_audio_light_rain_falling_softly,_gentle_raindrops,_natur_variation2.wav', d:'やさしい雨・遠距離系 variation2', lv:2 },
-  { f:'Firefly_audio_light_rain_falling_softly,_gentle_raindrops,_natur_variation3.wav', d:'やさしい雨・遠距離系 variation3', lv:4 },
-  { f:'Firefly_audio_light_rain_falling_softly,_gentle_raindrops,_natur_variation4.wav', d:'やさしい雨・遠距離系 variation4', lv:2 },
-  { f:'Firefly_audio_rain_hitting_asphalt_sound_variation1.wav', d:'アスファルトの雨ベース variation1', lv:5 },
-  { f:'Firefly_audio_rain_hitting_asphalt_sound_variation2.wav', d:'アスファルトの雨ベース variation2', lv:4 },
-  { f:'Firefly_audio_rain_hitting_asphalt_sound_variation3.wav', d:'アスファルトの雨ベース variation3', lv:3 },
-  { f:'Firefly_audio_rain_hitting_asphalt_sound_variation4.wav', d:'アスファルトの雨ベース variation4', lv:2 },
-  { f:'Firefly_audio_rain_hitting_metal_roof_sound_variation1.wav', d:'金属屋根の打音 variation1', lv:5 },
-  { f:'Firefly_audio_rain_hitting_metal_roof_sound_variation2.wav', d:'金属屋根の打音 variation2', lv:3 },
-  { f:'Firefly_audio_rain_hitting_metal_roof_sound_variation3.wav', d:'金属屋根の打音 variation3', lv:2 },
-  { f:'Firefly_audio_rain_hitting_metal_roof_sound_variation4.wav', d:'金属屋根の打音 variation4', lv:2 },
-  { f:'Firefly_audio_rain_hitting_puddles_sound_variation1.wav', d:'水たまり打音 variation1', lv:5 },
-  { f:'Firefly_audio_rain_hitting_puddles_sound_variation2.wav', d:'水たまり打音 variation2', lv:4 },
-  { f:'Firefly_audio_rain_hitting_puddles_sound_variation3.wav', d:'水たまり打音 variation3', lv:2 },
-  { f:'Firefly_audio_rain_hitting_puddles_sound_variation4.wav', d:'水たまり打音 variation4', lv:2 },
-  { f:'Firefly_audio_rain_hitting_tent_fabric_sound_variation1.wav', d:'テント布越しの雨 variation1', lv:5 },
-  { f:'Firefly_audio_rain_hitting_tent_fabric_sound_variation2.wav', d:'テント布越しの雨 variation2', lv:4 },
-  { f:'Firefly_audio_rain_hitting_tent_fabric_sound_variation3.wav', d:'テント布越しの雨 variation3', lv:3 },
-  { f:'Firefly_audio_rain_hitting_tent_fabric_sound_variation4.wav', d:'テント布越しの雨 variation4', lv:2 },
-  { f:'Firefly_audio_rain_sound_heard_from_inside_a_car_variation1.wav', d:'車内から聞く雨音 variation1', lv:5 },
-  { f:'Firefly_audio_rain_sound_heard_from_inside_a_car_variation2.wav', d:'車内から聞く雨音 variation2', lv:3 },
-  { f:'Firefly_audio_rain_sound_heard_from_inside_a_car_variation3.wav', d:'車内から聞く雨音 variation3', lv:3 },
-  { f:'Firefly_audio_rain_sound_heard_from_inside_a_car_variation4.wav', d:'車内から聞く雨音 variation4', lv:2 },
-  { f:'Firefly_audio_sound_of_thunder_variation1.wav', d:'遠雷・ゴロゴロ variation1', lv:5 },
-  { f:'Firefly_audio_sound_of_thunder_variation2.wav', d:'遠雷・ゴロゴロ variation2', lv:4 },
-  { f:'Firefly_audio_sound_of_thunder_variation3.wav', d:'遠雷・ゴロゴロ variation3', lv:2 },
-  { f:'Firefly_audio_sound_of_thunder_variation4.wav', d:'遠雷・ゴロゴロ variation4', lv:2 },
-  { f:'Firefly_audio_thunderclap_variation1.wav', d:'雷鳴・ドン variation1', lv:5 },
-  { f:'Firefly_audio_thunderclap_variation2.wav', d:'雷鳴・ドン variation2', lv:3 },
-  { f:'Firefly_audio_thunderclap_variation3.wav', d:'雷鳴・ドン variation3', lv:2 },
-  { f:'Firefly_audio_whistling_wind_sound_variation1.wav', d:'ヒューヒュー風音 variation1', lv:5 },
-  { f:'Firefly_audio_whistling_wind_sound_variation4.wav', d:'ヒューヒュー風音 variation4', lv:4 },
-  { f:'myedit_ai_sfx_0327082100.mp3', d:'myedit AI生成 #1', lv:2 },
-  { f:'myedit_ai_sfx_0327082102.mp3', d:'myedit AI生成 #2', lv:2 },
-  { f:'myedit_ai_sfx_0327082103.mp3', d:'myedit AI生成 #3', lv:1 },
-  { f:'myedit_ai_sfx_0327082329.mp3', d:'myedit AI生成 #4', lv:1 },
-  { f:'myedit_ai_sfx_0327082521.mp3', d:'myedit AI生成 #5', lv:3 },
+  { f:'Firefly_audio_gusty_wind_sound_variation1.wav', d:'突風・強風 v1', lv:4 },
+  { f:'Firefly_audio_gusty_wind_sound_variation2.wav', d:'突風・強風 v2', lv:3 },
+  { f:'Firefly_audio_light_rain_falling_softly,_gentle_raindrops,_natur_variation1.wav', d:'やさしい雨 v1', lv:3 },
+  { f:'Firefly_audio_light_rain_falling_softly,_gentle_raindrops,_natur_variation2.wav', d:'やさしい雨 v2', lv:2 },
+  { f:'Firefly_audio_light_rain_falling_softly,_gentle_raindrops,_natur_variation3.wav', d:'やさしい雨 v3', lv:4 },
+  { f:'Firefly_audio_light_rain_falling_softly,_gentle_raindrops,_natur_variation4.wav', d:'やさしい雨 v4', lv:2 },
+  { f:'Firefly_audio_rain_hitting_asphalt_sound_variation1.wav', d:'アスファルト v1', lv:5 },
+  { f:'Firefly_audio_rain_hitting_asphalt_sound_variation2.wav', d:'アスファルト v2', lv:4 },
+  { f:'Firefly_audio_rain_hitting_asphalt_sound_variation3.wav', d:'アスファルト v3', lv:3 },
+  { f:'Firefly_audio_rain_hitting_asphalt_sound_variation4.wav', d:'アスファルト v4', lv:2 },
+  { f:'Firefly_audio_rain_hitting_metal_roof_sound_variation1.wav', d:'金属屋根 v1', lv:5 },
+  { f:'Firefly_audio_rain_hitting_metal_roof_sound_variation2.wav', d:'金属屋根 v2', lv:3 },
+  { f:'Firefly_audio_rain_hitting_metal_roof_sound_variation3.wav', d:'金属屋根 v3', lv:2 },
+  { f:'Firefly_audio_rain_hitting_metal_roof_sound_variation4.wav', d:'金属屋根 v4', lv:2 },
+  { f:'Firefly_audio_rain_hitting_puddles_sound_variation1.wav', d:'水たまり v1', lv:5 },
+  { f:'Firefly_audio_rain_hitting_puddles_sound_variation2.wav', d:'水たまり v2', lv:4 },
+  { f:'Firefly_audio_rain_hitting_puddles_sound_variation3.wav', d:'水たまり v3', lv:2 },
+  { f:'Firefly_audio_rain_hitting_puddles_sound_variation4.wav', d:'水たまり v4', lv:2 },
+  { f:'Firefly_audio_rain_hitting_tent_fabric_sound_variation1.wav', d:'テント v1', lv:5 },
+  { f:'Firefly_audio_rain_hitting_tent_fabric_sound_variation2.wav', d:'テント v2', lv:4 },
+  { f:'Firefly_audio_rain_hitting_tent_fabric_sound_variation3.wav', d:'テント v3', lv:3 },
+  { f:'Firefly_audio_rain_hitting_tent_fabric_sound_variation4.wav', d:'テント v4', lv:2 },
+  { f:'Firefly_audio_rain_sound_heard_from_inside_a_car_variation1.wav', d:'車内 v1', lv:5 },
+  { f:'Firefly_audio_rain_sound_heard_from_inside_a_car_variation2.wav', d:'車内 v2', lv:3 },
+  { f:'Firefly_audio_rain_sound_heard_from_inside_a_car_variation3.wav', d:'車内 v3', lv:3 },
+  { f:'Firefly_audio_rain_sound_heard_from_inside_a_car_variation4.wav', d:'車内 v4', lv:2 },
+  { f:'Firefly_audio_sound_of_thunder_variation1.wav', d:'遠雷 v1', lv:5 },
+  { f:'Firefly_audio_sound_of_thunder_variation2.wav', d:'遠雷 v2', lv:4 },
+  { f:'Firefly_audio_sound_of_thunder_variation3.wav', d:'遠雷 v3', lv:2 },
+  { f:'Firefly_audio_sound_of_thunder_variation4.wav', d:'遠雷 v4', lv:2 },
+  { f:'Firefly_audio_thunderclap_variation1.wav', d:'雷鳴 v1', lv:5 },
+  { f:'Firefly_audio_thunderclap_variation2.wav', d:'雷鳴 v2', lv:3 },
+  { f:'Firefly_audio_thunderclap_variation3.wav', d:'雷鳴 v3', lv:2 },
+  { f:'Firefly_audio_whistling_wind_sound_variation1.wav', d:'ヒューヒュー風 v1', lv:5 },
+  { f:'Firefly_audio_whistling_wind_sound_variation4.wav', d:'ヒューヒュー風 v4', lv:4 },
+  { f:'myedit_ai_sfx_0327082100.mp3', d:'myedit AI #1', lv:2 },
+  { f:'myedit_ai_sfx_0327082102.mp3', d:'myedit AI #2', lv:2 },
+  { f:'myedit_ai_sfx_0327082103.mp3', d:'myedit AI #3', lv:1 },
+  { f:'myedit_ai_sfx_0327082329.mp3', d:'myedit AI #4', lv:1 },
+  { f:'myedit_ai_sfx_0327082521.mp3', d:'myedit AI #5', lv:3 },
 ];
 
-// ランダム間隔(秒) 0=なし, 1=30s, 2=60s, 3=90s, 4=120s, 5=180s
-const RAND_INTERVALS = [0, 30, 60, 90, 120, 180];
-const RAND_LABELS = ['0 (なし)','1 (30秒)','2 (60秒)','3 (90秒)','4 (120秒)','5 (3分)'];
+const RAND_INTERVALS = [0,30,60,90,120,180];
+const RAND_LABELS = ['0(なし)','1(30s)','2(60s)','3(90s)','4(2m)','5(3m)'];
 
-const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-const state = files.map(() => ({
-  audio: null, gainNode: null, vol: 0, rand: 0, randTimer: null, playing: false
-}));
+let audioCtx = null;
+let unlocked = false;
+const state = files.map(() => ({ audio:null, gainNode:null, vol:0, rand:0, randTimer:null, playing:false }));
 
-function lvClass(n) {
-  return ['','lvl-1','lvl-2','lvl-3','lvl-4','lvl-5'][n];
+function unlockAudio() {
+  if (unlocked) return;
+  audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+  // サイレントバッファで解除
+  const buf = audioCtx.createBuffer(1,1,22050);
+  const src = audioCtx.createBufferSource();
+  src.buffer = buf; src.connect(audioCtx.destination); src.start(0);
+  unlocked = true;
+  const btn = document.getElementById('unlockBtn');
+  btn.textContent = '✓ 音声有効 — スライダーを動かして再生';
+  btn.classList.add('done');
 }
+
+function lvClass(n) { return ['','lvl-1','lvl-2','lvl-3','lvl-4','lvl-5'][n]; }
 
 function buildRows() {
   const container = document.getElementById('rows');
   files.forEach((item, i) => {
     const row = document.createElement('div');
-    row.className = 'row';
-    row.id = 'row-' + i;
-
-    const lvStars = '★'.repeat(item.lv) + '☆'.repeat(5 - item.lv);
-
+    row.className = 'row'; row.id = 'row-'+i;
+    const stars = '★'.repeat(item.lv)+'☆'.repeat(5-item.lv);
     row.innerHTML = `
-      <div class="fname">${item.f}</div>
-      <div class="desc">${item.d}</div>
-      <div class="level ${lvClass(item.lv)}">${lvStars}</div>
+      <div class="info">
+        <div class="fname" title="${item.f}">${item.f}</div>
+        <div class="desc">${item.d}</div>
+      </div>
+      <div class="level ${lvClass(item.lv)}">${stars}</div>
       <div class="mixer-wrap">
         <input type="range" min="0" max="100" value="0" id="vol-${i}" oninput="onVol(${i},this.value)">
       </div>
-      <div class="vol-num" id="volnum-${i}">0 <span class="playing-dot" id="dot-${i}" style="display:none">▶</span></div>
-      <div>
-        <select id="rand-${i}" onchange="onRand(${i},this.value)">
-          ${RAND_LABELS.map((l,v)=>`<option value="${v}">${l}</option>`).join('')}
-        </select>
-      </div>
+      <div class="vol-num" id="volnum-${i}">0<span class="dot" id="dot-${i}" style="display:none"> ▶</span></div>
+      <select id="rand-${i}" onchange="onRand(${i},this.value)">
+        ${RAND_LABELS.map((l,v)=>`<option value="${v}">${l}</option>`).join('')}
+      </select>
     `;
     container.appendChild(row);
   });
 }
 
-function getOrCreateAudio(i) {
+function getOrCreate(i) {
   if (state[i].audio) return state[i].audio;
   const audio = new Audio(BASE + files[i].f);
   audio.loop = true;
   audio.crossOrigin = 'anonymous';
-  const source = audioCtx.createMediaElementSource(audio);
+  const src = audioCtx.createMediaElementSource(audio);
   const gain = audioCtx.createGain();
   gain.gain.value = 0;
-  source.connect(gain);
-  gain.connect(audioCtx.destination);
-  state[i].audio = audio;
-  state[i].gainNode = gain;
+  src.connect(gain); gain.connect(audioCtx.destination);
+  state[i].audio = audio; state[i].gainNode = gain;
   return audio;
 }
 
 function onVol(i, val) {
+  if (!unlocked) { alert('先に「タップして音声を有効化」ボタンを押してください'); return; }
   const v = parseInt(val);
   state[i].vol = v;
-  document.getElementById('volnum-' + i).childNodes[0].nodeValue = v + ' ';
-
-  if (audioCtx.state === 'suspended') audioCtx.resume();
-
-  const audio = getOrCreateAudio(i);
+  document.getElementById('volnum-'+i).firstChild.nodeValue = v;
+  const audio = getOrCreate(i);
   state[i].gainNode.gain.value = v / 100;
-
   if (v >= 1 && !state[i].playing) {
-    audio.play().catch(()=>{});
+    audio.play().catch(e => console.log(e));
     state[i].playing = true;
-    document.getElementById('dot-' + i).style.display = 'inline';
-    document.getElementById('row-' + i).classList.add('playing');
+    document.getElementById('dot-'+i).style.display = 'inline';
+    document.getElementById('row-'+i).classList.add('playing');
   } else if (v === 0 && state[i].playing) {
-    audio.pause();
+    audio.pause(); audio.currentTime = 0;
     state[i].playing = false;
-    document.getElementById('dot-' + i).style.display = 'none';
-    document.getElementById('row-' + i).classList.remove('playing');
+    document.getElementById('dot-'+i).style.display = 'none';
+    document.getElementById('row-'+i).classList.remove('playing');
   }
 }
 
@@ -191,17 +198,13 @@ function onRand(i, val) {
 }
 
 function triggerRand(i) {
-  if (state[i].vol > 0) return; // 通常再生中はスキップ
-  if (audioCtx.state === 'suspended') audioCtx.resume();
-  const audio = getOrCreateAudio(i);
+  if (!unlocked || state[i].vol > 0) return;
+  const audio = getOrCreate(i);
   state[i].gainNode.gain.value = 0.6;
   audio.currentTime = 0;
   audio.play().catch(()=>{});
   setTimeout(() => {
-    if (state[i].vol === 0) {
-      state[i].gainNode.gain.value = 0;
-      if (!state[i].playing) audio.pause();
-    }
+    if (state[i].vol === 0) { state[i].gainNode.gain.value = 0; audio.pause(); }
   }, 8000);
 }
 
