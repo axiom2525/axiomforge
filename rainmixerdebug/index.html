@@ -36,14 +36,14 @@ select { background:#222; color:#aaa; border:1px solid #444; padding:3px 2px; fo
   <div style="text-align:center">レベル</div>
   <div style="text-align:center">音量</div>
   <div style="text-align:center">値</div>
-  <div>ランダム</div>
+  <div>インターバル</div>
 </div>
 <div id="rows"></div>
 
 <script>
 const BASE = '/rainmixerdebug/';
-const FADE_SEC = 2.0;   // クロスフェード秒数
-const FADE_STEP = 50;   // ms単位の更新間隔
+const FADE_SEC = 2.0;
+const FADE_STEP = 50;
 
 const files = [
   {f:'Firefly_audio_gusty_wind_sound_variation1.wav',d:'突風・強風 v1',lv:4},
@@ -73,16 +73,16 @@ const files = [
   {f:'Firefly_audio_whistling_wind_sound_variation4.wav',d:'ヒュー風 v4',lv:4},
 ];
 
-const RAND_SEC  = [0,30,60,90,120,180];
-const RAND_LBL  = ['0(なし)','1(30s)','2(60s)','3(90s)','4(2m)','5(3m)'];
+// インターバル: なし/10s/20s/30s/60s/90s
+const INTV_SEC = [0, 10, 20, 30, 60, 90];
+const INTV_LBL = ['なし','10秒','20秒','30秒','60秒','90秒'];
 
-// トラックごとにA/B 2枚のAudioを持ちクロスフェードでループ
 const tracks = files.map(it => {
   const url = BASE + it.f;
   const a = new Audio(url);
   const b = new Audio(url);
   a.preload = b.preload = 'auto';
-  return { a, b, active:'a', vol:0, fading:false, fadeTimer:null, randTimer:null };
+  return { a, b, active:'a', vol:0, intv:0, intvTimer:null, fading:false, fadeTimer:null, playing:false };
 });
 
 function lvC(n){return['','lvl-1','lvl-2','lvl-3','lvl-4','lvl-5'][n];}
@@ -101,15 +101,41 @@ function build() {
       <div class="level ${lvC(it.lv)}">${stars}</div>
       <input type="range" min="0" max="100" value="0" id="s${i}" oninput="setVol(${i},+this.value)">
       <div class="vol-num" id="n${i}">0<span class="dot" id="d${i}" style="display:none">▶</span></div>
-      <select onchange="setRand(${i},+this.value)">
-        ${RAND_LBL.map((l,v)=>`<option value="${v}">${l}</option>`).join('')}
+      <select id="intv${i}" onchange="setIntv(${i},+this.value)">
+        ${INTV_LBL.map((l,v)=>`<option value="${v}">${l}</option>`).join('')}
       </select>`;
     c.appendChild(row);
 
-    // timeupdate でクロスフェード開始を監視
+    // ended イベントでインターバル待機開始
+    tracks[i].a.addEventListener('ended', ()=>onEnded(i));
+    tracks[i].b.addEventListener('ended', ()=>onEnded(i));
+
+    // timeupdate でクロスフェード開始を監視（ループ再生用）
     tracks[i].a.addEventListener('timeupdate', ()=>checkXfade(i,'a'));
     tracks[i].b.addEventListener('timeupdate', ()=>checkXfade(i,'b'));
   });
+}
+
+// インターバル再生が終わったら待機→再生サイクル
+function onEnded(i) {
+  const t = tracks[i];
+  if (t.vol > 0) return; // 通常再生中は無視
+  if (t.intv === 0) return;
+  const sec = INTV_SEC[t.intv];
+  t.intvTimer = setTimeout(() => playOnce(i), sec * 1000);
+}
+
+// インターバル1回再生
+function playOnce(i) {
+  const t = tracks[i];
+  if (t.vol > 0) return; // 通常再生中はスキップ
+  const a = t.a;
+  a.currentTime = 0;
+  a.volume = t.vol > 0 ? t.vol / 100 : Math.max(parseFloat(document.getElementById('s'+i).value) / 100, 0.01);
+  // スライダーが0でもインターバルは動く場合、スライダー値を使う（0なら0.6デフォルト）
+  const sliderVal = parseFloat(document.getElementById('s'+i).value);
+  a.volume = sliderVal > 0 ? sliderVal / 100 : 0.6;
+  a.play().catch(()=>{});
 }
 
 function checkXfade(i, which) {
@@ -122,7 +148,6 @@ function checkXfade(i, which) {
   const rem = cur.duration - cur.currentTime;
   if (rem > FADE_SEC || rem <= 0) return;
 
-  // クロスフェード開始
   t.fading = true;
   nxt.currentTime = 0;
   nxt.volume = 0;
@@ -134,7 +159,6 @@ function checkXfade(i, which) {
   t.fadeTimer = setInterval(() => {
     step++;
     const prog = Math.min(step / steps, 1);
-    // 等パワーフェード: sin/cosカーブで合計パワーを一定に保つ
     const angle = prog * Math.PI / 2;
     cur.volume = targetVol * Math.cos(angle);
     nxt.volume = targetVol * Math.sin(angle);
@@ -151,8 +175,15 @@ function setVol(i, v) {
   const t = tracks[i];
   t.vol = v;
   document.getElementById('n'+i).firstChild.nodeValue = v;
-  const cur = t.active==='a' ? t.a : t.b;
 
+  // ボリューム変更時はインターバルをなしにリセット
+  if (t.intv !== 0) {
+    t.intv = 0;
+    if (t.intvTimer) { clearTimeout(t.intvTimer); t.intvTimer = null; }
+    document.getElementById('intv'+i).value = 0;
+  }
+
+  const cur = t.active==='a' ? t.a : t.b;
   if (v >= 1) {
     cur.volume = v / 100;
     if (cur.paused) { cur.currentTime=0; cur.play().catch(()=>{}); }
@@ -169,34 +200,13 @@ function setVol(i, v) {
   }
 }
 
-function setRand(i, v) {
+function setIntv(i, v) {
   const t = tracks[i];
-  if (t.randTimer) { clearInterval(t.randTimer); t.randTimer=null; }
-  if (!v) return;
-  t.randTimer = setInterval(()=>fireRand(i), RAND_SEC[v]*1000);
-}
-
-function fireRand(i) {
-  const t = tracks[i];
-  if (t.vol > 0) return;
-  const a = t.a;
-  a.currentTime=0; a.volume=0;
-  a.play().catch(()=>{});
-  // フェードイン
-  let vol=0;
-  const inTimer = setInterval(()=>{
-    vol = Math.min(vol+0.05, 0.6); a.volume=vol;
-    if(vol>=0.6) clearInterval(inTimer);
-  }, 80);
-  // 6秒後フェードアウト
-  setTimeout(()=>{
-    if(t.vol>0) return;
-    let v2=a.volume;
-    const outTimer=setInterval(()=>{
-      v2=Math.max(v2-0.04,0); a.volume=v2;
-      if(v2<=0){ clearInterval(outTimer); a.pause(); }
-    },80);
-  }, 6000);
+  t.intv = v;
+  if (t.intvTimer) { clearTimeout(t.intvTimer); t.intvTimer = null; }
+  if (v === 0) return;
+  // 設定直後に1回すぐ再生開始
+  playOnce(i);
 }
 
 build();
