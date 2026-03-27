@@ -130,8 +130,10 @@ function checkXfade(i, which) {
   t.fadeTimer = setInterval(() => {
     step++;
     const prog = Math.min(step / steps, 1);
-    cur.volume = targetVol * (1 - prog);
-    nxt.volume = targetVol * prog;
+    // 等パワーフェード: sin/cosカーブで合計パワーを一定に保つ
+    const angle = prog * Math.PI / 2;
+    cur.volume = targetVol * Math.cos(angle);
+    nxt.volume = targetVol * Math.sin(angle);
     if (prog >= 1) {
       clearInterval(t.fadeTimer);
       cur.pause(); cur.currentTime = 0; cur.volume = 0;
