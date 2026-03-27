@@ -41,9 +41,9 @@ function play(url) {
   a.onerror = () => log('✗ ロードエラー: ' + (a.error ? a.error.code : '不明'));
 }
 
-function test1() { play('./Firefly_audio_rain_hitting_asphalt_sound_variation1.wav'); }
-function test2() { play('./Firefly_audio_sound_of_thunder_variation1.wav'); }
-function test3() { play('./myedit_ai_sfx_0327082100.mp3'); }
+function test1() { play('/rainmixerdebug/Firefly_audio_rain_hitting_asphalt_sound_variation1.wav'); }
+function test2() { play('/rainmixerdebug/Firefly_audio_sound_of_thunder_variation1.wav'); }
+function test3() { play('/rainmixerdebug/myedit_ai_sfx_0327082100.mp3'); }
 
 function stopAll() {
   audios.forEach(a => { a.pause(); a.currentTime = 0; });
