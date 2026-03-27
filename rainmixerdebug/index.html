@@ -8,16 +8,9 @@
 * { box-sizing: border-box; margin: 0; padding: 0; }
 body { font-family: monospace; background: #111; color: #ddd; font-size: 13px; }
 h1 { color: #7cf; padding: 12px 16px 8px; font-size: 15px; border-bottom: 1px solid #333; }
-.unlock-btn {
-  display: block; width: 100%; padding: 14px;
-  background: #1a3a5a; color: #7cf; font-size: 15px;
-  border: none; cursor: pointer; text-align: center;
-  border-bottom: 1px solid #333;
-}
-.unlock-btn.done { background: #0a1a0a; color: #0f0; }
 .grid-header {
   display: grid;
-  grid-template-columns: 1fr 80px 90px 90px 80px;
+  grid-template-columns: 1fr 80px 90px 70px 80px;
   gap: 4px; padding: 6px 8px;
   background: #1a1a1a; color: #666; font-size: 11px;
   border-bottom: 1px solid #333;
@@ -25,41 +18,30 @@ h1 { color: #7cf; padding: 12px 16px 8px; font-size: 15px; border-bottom: 1px so
 }
 .row {
   display: grid;
-  grid-template-columns: 1fr 80px 90px 90px 80px;
+  grid-template-columns: 1fr 80px 90px 70px 80px;
   gap: 4px; padding: 8px 8px;
   border-bottom: 1px solid #1e1e1e;
   align-items: center;
 }
 .row.playing { background: #0a1a0a; }
 .info { min-width: 0; }
-.fname {
-  color: #7af; font-size: 11px;
-  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
-  cursor: pointer;
-}
-.fname:active { white-space: normal; word-break: break-all; }
+.fname { color: #7af; font-size: 11px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .desc { color: #888; font-size: 11px; margin-top: 2px; }
-.level { text-align: center; font-size: 12px; }
-.lvl-5 { color: #0f0; } .lvl-4 { color: #9f0; } .lvl-3 { color: #ff0; }
-.lvl-2 { color: #f90; } .lvl-1 { color: #f44; }
-.mixer-wrap { display: flex; flex-direction: column; align-items: center; gap: 3px; }
-input[type=range] { width: 72px; accent-color: #7cf; }
-.vol-num { color: #7cf; font-size: 13px; font-weight: bold; text-align: center; }
-.dot { color: #0f0; font-size: 10px; }
-select {
-  background: #222; color: #aaa; border: 1px solid #444;
-  padding: 3px 2px; font-size: 11px; border-radius: 3px; width: 76px;
-}
+.level { text-align: center; font-size: 11px; }
+.lvl-5{color:#0f0} .lvl-4{color:#9f0} .lvl-3{color:#ff0} .lvl-2{color:#f90} .lvl-1{color:#f44}
+input[type=range] { width: 80px; accent-color: #7cf; }
+.vol-num { color: #7cf; font-size: 13px; text-align: center; }
+.dot { color: #0f0; }
+select { background:#222; color:#aaa; border:1px solid #444; padding:3px 2px; font-size:11px; border-radius:3px; width:76px; }
 </style>
 </head>
 <body>
 <h1>🌧 雨音ミキサー デバッグ</h1>
-<button class="unlock-btn" id="unlockBtn" onclick="unlockAudio()">▶ タップして音声を有効化</button>
 <div class="grid-header">
   <div>ファイル / 説明</div>
   <div style="text-align:center">レベル</div>
   <div style="text-align:center">音量</div>
-  <div style="text-align:center">音量値</div>
+  <div style="text-align:center">値</div>
   <div>ランダム</div>
 </div>
 <div id="rows"></div>
@@ -67,148 +49,113 @@ select {
 <script>
 const BASE = './';
 const files = [
-  { f:'Firefly_audio_gusty_wind_sound_variation1.wav', d:'突風・強風 v1', lv:4 },
-  { f:'Firefly_audio_gusty_wind_sound_variation2.wav', d:'突風・強風 v2', lv:3 },
-  { f:'Firefly_audio_light_rain_falling_softly,_gentle_raindrops,_natur_variation1.wav', d:'やさしい雨 v1', lv:3 },
-  { f:'Firefly_audio_light_rain_falling_softly,_gentle_raindrops,_natur_variation2.wav', d:'やさしい雨 v2', lv:2 },
-  { f:'Firefly_audio_light_rain_falling_softly,_gentle_raindrops,_natur_variation3.wav', d:'やさしい雨 v3', lv:4 },
-  { f:'Firefly_audio_light_rain_falling_softly,_gentle_raindrops,_natur_variation4.wav', d:'やさしい雨 v4', lv:2 },
-  { f:'Firefly_audio_rain_hitting_asphalt_sound_variation1.wav', d:'アスファルト v1', lv:5 },
-  { f:'Firefly_audio_rain_hitting_asphalt_sound_variation2.wav', d:'アスファルト v2', lv:4 },
-  { f:'Firefly_audio_rain_hitting_asphalt_sound_variation3.wav', d:'アスファルト v3', lv:3 },
-  { f:'Firefly_audio_rain_hitting_asphalt_sound_variation4.wav', d:'アスファルト v4', lv:2 },
-  { f:'Firefly_audio_rain_hitting_metal_roof_sound_variation1.wav', d:'金属屋根 v1', lv:5 },
-  { f:'Firefly_audio_rain_hitting_metal_roof_sound_variation2.wav', d:'金属屋根 v2', lv:3 },
-  { f:'Firefly_audio_rain_hitting_metal_roof_sound_variation3.wav', d:'金属屋根 v3', lv:2 },
-  { f:'Firefly_audio_rain_hitting_metal_roof_sound_variation4.wav', d:'金属屋根 v4', lv:2 },
-  { f:'Firefly_audio_rain_hitting_puddles_sound_variation1.wav', d:'水たまり v1', lv:5 },
-  { f:'Firefly_audio_rain_hitting_puddles_sound_variation2.wav', d:'水たまり v2', lv:4 },
-  { f:'Firefly_audio_rain_hitting_puddles_sound_variation3.wav', d:'水たまり v3', lv:2 },
-  { f:'Firefly_audio_rain_hitting_puddles_sound_variation4.wav', d:'水たまり v4', lv:2 },
-  { f:'Firefly_audio_rain_hitting_tent_fabric_sound_variation1.wav', d:'テント v1', lv:5 },
-  { f:'Firefly_audio_rain_hitting_tent_fabric_sound_variation2.wav', d:'テント v2', lv:4 },
-  { f:'Firefly_audio_rain_hitting_tent_fabric_sound_variation3.wav', d:'テント v3', lv:3 },
-  { f:'Firefly_audio_rain_hitting_tent_fabric_sound_variation4.wav', d:'テント v4', lv:2 },
-  { f:'Firefly_audio_rain_sound_heard_from_inside_a_car_variation1.wav', d:'車内 v1', lv:5 },
-  { f:'Firefly_audio_rain_sound_heard_from_inside_a_car_variation2.wav', d:'車内 v2', lv:3 },
-  { f:'Firefly_audio_rain_sound_heard_from_inside_a_car_variation3.wav', d:'車内 v3', lv:3 },
-  { f:'Firefly_audio_rain_sound_heard_from_inside_a_car_variation4.wav', d:'車内 v4', lv:2 },
-  { f:'Firefly_audio_sound_of_thunder_variation1.wav', d:'遠雷 v1', lv:5 },
-  { f:'Firefly_audio_sound_of_thunder_variation2.wav', d:'遠雷 v2', lv:4 },
-  { f:'Firefly_audio_sound_of_thunder_variation3.wav', d:'遠雷 v3', lv:2 },
-  { f:'Firefly_audio_sound_of_thunder_variation4.wav', d:'遠雷 v4', lv:2 },
-  { f:'Firefly_audio_thunderclap_variation1.wav', d:'雷鳴 v1', lv:5 },
-  { f:'Firefly_audio_thunderclap_variation2.wav', d:'雷鳴 v2', lv:3 },
-  { f:'Firefly_audio_thunderclap_variation3.wav', d:'雷鳴 v3', lv:2 },
-  { f:'Firefly_audio_whistling_wind_sound_variation1.wav', d:'ヒューヒュー風 v1', lv:5 },
-  { f:'Firefly_audio_whistling_wind_sound_variation4.wav', d:'ヒューヒュー風 v4', lv:4 },
-  { f:'myedit_ai_sfx_0327082100.mp3', d:'myedit AI #1', lv:2 },
-  { f:'myedit_ai_sfx_0327082102.mp3', d:'myedit AI #2', lv:2 },
-  { f:'myedit_ai_sfx_0327082103.mp3', d:'myedit AI #3', lv:1 },
-  { f:'myedit_ai_sfx_0327082329.mp3', d:'myedit AI #4', lv:1 },
-  { f:'myedit_ai_sfx_0327082521.mp3', d:'myedit AI #5', lv:3 },
+  {f:'Firefly_audio_gusty_wind_sound_variation1.wav',d:'突風・強風 v1',lv:4},
+  {f:'Firefly_audio_gusty_wind_sound_variation2.wav',d:'突風・強風 v2',lv:3},
+  {f:'Firefly_audio_light_rain_falling_softly,_gentle_raindrops,_natur_variation1.wav',d:'やさしい雨 v1',lv:3},
+  {f:'Firefly_audio_light_rain_falling_softly,_gentle_raindrops,_natur_variation2.wav',d:'やさしい雨 v2',lv:2},
+  {f:'Firefly_audio_light_rain_falling_softly,_gentle_raindrops,_natur_variation3.wav',d:'やさしい雨 v3',lv:4},
+  {f:'Firefly_audio_light_rain_falling_softly,_gentle_raindrops,_natur_variation4.wav',d:'やさしい雨 v4',lv:2},
+  {f:'Firefly_audio_rain_hitting_asphalt_sound_variation1.wav',d:'アスファルト v1',lv:5},
+  {f:'Firefly_audio_rain_hitting_asphalt_sound_variation2.wav',d:'アスファルト v2',lv:4},
+  {f:'Firefly_audio_rain_hitting_asphalt_sound_variation3.wav',d:'アスファルト v3',lv:3},
+  {f:'Firefly_audio_rain_hitting_asphalt_sound_variation4.wav',d:'アスファルト v4',lv:2},
+  {f:'Firefly_audio_rain_hitting_metal_roof_sound_variation1.wav',d:'金属屋根 v1',lv:5},
+  {f:'Firefly_audio_rain_hitting_metal_roof_sound_variation2.wav',d:'金属屋根 v2',lv:3},
+  {f:'Firefly_audio_rain_hitting_metal_roof_sound_variation3.wav',d:'金属屋根 v3',lv:2},
+  {f:'Firefly_audio_rain_hitting_metal_roof_sound_variation4.wav',d:'金属屋根 v4',lv:2},
+  {f:'Firefly_audio_rain_hitting_puddles_sound_variation1.wav',d:'水たまり v1',lv:5},
+  {f:'Firefly_audio_rain_hitting_puddles_sound_variation2.wav',d:'水たまり v2',lv:4},
+  {f:'Firefly_audio_rain_hitting_puddles_sound_variation3.wav',d:'水たまり v3',lv:2},
+  {f:'Firefly_audio_rain_hitting_puddles_sound_variation4.wav',d:'水たまり v4',lv:2},
+  {f:'Firefly_audio_rain_hitting_tent_fabric_sound_variation1.wav',d:'テント v1',lv:5},
+  {f:'Firefly_audio_rain_hitting_tent_fabric_sound_variation2.wav',d:'テント v2',lv:4},
+  {f:'Firefly_audio_rain_hitting_tent_fabric_sound_variation3.wav',d:'テント v3',lv:3},
+  {f:'Firefly_audio_rain_hitting_tent_fabric_sound_variation4.wav',d:'テント v4',lv:2},
+  {f:'Firefly_audio_rain_sound_heard_from_inside_a_car_variation1.wav',d:'車内 v1',lv:5},
+  {f:'Firefly_audio_rain_sound_heard_from_inside_a_car_variation2.wav',d:'車内 v2',lv:3},
+  {f:'Firefly_audio_rain_sound_heard_from_inside_a_car_variation3.wav',d:'車内 v3',lv:3},
+  {f:'Firefly_audio_rain_sound_heard_from_inside_a_car_variation4.wav',d:'車内 v4',lv:2},
+  {f:'Firefly_audio_sound_of_thunder_variation1.wav',d:'遠雷 v1',lv:5},
+  {f:'Firefly_audio_sound_of_thunder_variation2.wav',d:'遠雷 v2',lv:4},
+  {f:'Firefly_audio_sound_of_thunder_variation3.wav',d:'遠雷 v3',lv:2},
+  {f:'Firefly_audio_sound_of_thunder_variation4.wav',d:'遠雷 v4',lv:2},
+  {f:'Firefly_audio_thunderclap_variation1.wav',d:'雷鳴 v1',lv:5},
+  {f:'Firefly_audio_thunderclap_variation2.wav',d:'雷鳴 v2',lv:3},
+  {f:'Firefly_audio_thunderclap_variation3.wav',d:'雷鳴 v3',lv:2},
+  {f:'Firefly_audio_whistling_wind_sound_variation1.wav',d:'ヒュー風 v1',lv:5},
+  {f:'Firefly_audio_whistling_wind_sound_variation4.wav',d:'ヒュー風 v4',lv:4},
+  {f:'myedit_ai_sfx_0327082100.mp3',d:'myedit AI #1',lv:2},
+  {f:'myedit_ai_sfx_0327082102.mp3',d:'myedit AI #2',lv:2},
+  {f:'myedit_ai_sfx_0327082103.mp3',d:'myedit AI #3',lv:1},
+  {f:'myedit_ai_sfx_0327082329.mp3',d:'myedit AI #4',lv:1},
+  {f:'myedit_ai_sfx_0327082521.mp3',d:'myedit AI #5',lv:3},
 ];
 
-const RAND_INTERVALS = [0,30,60,90,120,180];
-const RAND_LABELS = ['0(なし)','1(30s)','2(60s)','3(90s)','4(2m)','5(3m)'];
+const RAND_SEC = [0,30,60,90,120,180];
+const RAND_LBL = ['0(なし)','1(30s)','2(60s)','3(90s)','4(2m)','5(3m)'];
+const audios = [];
+const randTimers = [];
 
-let audioCtx = null;
-let unlocked = false;
-const state = files.map(() => ({ audio:null, gainNode:null, vol:0, rand:0, randTimer:null, playing:false }));
+function lvC(n){return['','lvl-1','lvl-2','lvl-3','lvl-4','lvl-5'][n];}
 
-function unlockAudio() {
-  if (unlocked) return;
-  audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-  // サイレントバッファで解除
-  const buf = audioCtx.createBuffer(1,1,22050);
-  const src = audioCtx.createBufferSource();
-  src.buffer = buf; src.connect(audioCtx.destination); src.start(0);
-  unlocked = true;
-  const btn = document.getElementById('unlockBtn');
-  btn.textContent = '✓ 音声有効 — スライダーを動かして再生';
-  btn.classList.add('done');
-}
+function build() {
+  const c = document.getElementById('rows');
+  files.forEach((it,i) => {
+    const audio = new Audio(BASE + it.f);
+    audio.loop = true;
+    audio.preload = 'none';
+    audios[i] = audio;
+    randTimers[i] = null;
 
-function lvClass(n) { return ['','lvl-1','lvl-2','lvl-3','lvl-4','lvl-5'][n]; }
-
-function buildRows() {
-  const container = document.getElementById('rows');
-  files.forEach((item, i) => {
     const row = document.createElement('div');
-    row.className = 'row'; row.id = 'row-'+i;
-    const stars = '★'.repeat(item.lv)+'☆'.repeat(5-item.lv);
+    row.className = 'row'; row.id = 'r'+i;
+    const stars = '★'.repeat(it.lv)+'☆'.repeat(5-it.lv);
     row.innerHTML = `
       <div class="info">
-        <div class="fname" title="${item.f}">${item.f}</div>
-        <div class="desc">${item.d}</div>
+        <div class="fname" title="${it.f}">${it.f}</div>
+        <div class="desc">${it.d}</div>
       </div>
-      <div class="level ${lvClass(item.lv)}">${stars}</div>
-      <div class="mixer-wrap">
-        <input type="range" min="0" max="100" value="0" id="vol-${i}" oninput="onVol(${i},this.value)">
-      </div>
-      <div class="vol-num" id="volnum-${i}">0<span class="dot" id="dot-${i}" style="display:none"> ▶</span></div>
-      <select id="rand-${i}" onchange="onRand(${i},this.value)">
-        ${RAND_LABELS.map((l,v)=>`<option value="${v}">${l}</option>`).join('')}
-      </select>
-    `;
-    container.appendChild(row);
+      <div class="level ${lvC(it.lv)}">${stars}</div>
+      <input type="range" min="0" max="100" value="0" id="s${i}" oninput="setVol(${i},+this.value)">
+      <div class="vol-num" id="n${i}">0<span class="dot" id="d${i}" style="display:none">▶</span></div>
+      <select onchange="setRand(${i},+this.value)">
+        ${RAND_LBL.map((l,v)=>`<option value="${v}">${l}</option>`).join('')}
+      </select>`;
+    c.appendChild(row);
   });
 }
 
-function getOrCreate(i) {
-  if (state[i].audio) return state[i].audio;
-  const audio = new Audio(BASE + files[i].f);
-  audio.loop = true;
-  audio.crossOrigin = 'anonymous';
-  const src = audioCtx.createMediaElementSource(audio);
-  const gain = audioCtx.createGain();
-  gain.gain.value = 0;
-  src.connect(gain); gain.connect(audioCtx.destination);
-  state[i].audio = audio; state[i].gainNode = gain;
-  return audio;
-}
-
-function onVol(i, val) {
-  if (!unlocked) { alert('先に「タップして音声を有効化」ボタンを押してください'); return; }
-  const v = parseInt(val);
-  state[i].vol = v;
-  document.getElementById('volnum-'+i).firstChild.nodeValue = v;
-  const audio = getOrCreate(i);
-  state[i].gainNode.gain.value = v / 100;
-  if (v >= 1 && !state[i].playing) {
-    audio.play().catch(e => console.log(e));
-    state[i].playing = true;
-    document.getElementById('dot-'+i).style.display = 'inline';
-    document.getElementById('row-'+i).classList.add('playing');
-  } else if (v === 0 && state[i].playing) {
-    audio.pause(); audio.currentTime = 0;
-    state[i].playing = false;
-    document.getElementById('dot-'+i).style.display = 'none';
-    document.getElementById('row-'+i).classList.remove('playing');
+function setVol(i, v) {
+  const a = audios[i];
+  a.volume = v / 100;
+  document.getElementById('n'+i).firstChild.nodeValue = v;
+  const dot = document.getElementById('d'+i);
+  const row = document.getElementById('r'+i);
+  if (v >= 1) {
+    if (a.paused) a.play().catch(()=>{});
+    dot.style.display='inline'; row.classList.add('playing');
+  } else {
+    a.pause(); a.currentTime=0;
+    dot.style.display='none'; row.classList.remove('playing');
   }
 }
 
-function onRand(i, val) {
-  const v = parseInt(val);
-  state[i].rand = v;
-  if (state[i].randTimer) { clearInterval(state[i].randTimer); state[i].randTimer = null; }
-  if (v === 0) return;
-  const sec = RAND_INTERVALS[v];
-  state[i].randTimer = setInterval(() => triggerRand(i), sec * 1000);
+function setRand(i, v) {
+  if (randTimers[i]) { clearInterval(randTimers[i]); randTimers[i]=null; }
+  if (!v) return;
+  randTimers[i] = setInterval(()=>fireRand(i), RAND_SEC[v]*1000);
 }
 
-function triggerRand(i) {
-  if (!unlocked || state[i].vol > 0) return;
-  const audio = getOrCreate(i);
-  state[i].gainNode.gain.value = 0.6;
-  audio.currentTime = 0;
-  audio.play().catch(()=>{});
-  setTimeout(() => {
-    if (state[i].vol === 0) { state[i].gainNode.gain.value = 0; audio.pause(); }
-  }, 8000);
+function fireRand(i) {
+  const a = audios[i];
+  const curVol = parseFloat(document.getElementById('s'+i).value);
+  if (curVol > 0) return;
+  a.volume = 0.6; a.currentTime=0;
+  a.play().catch(()=>{});
+  setTimeout(()=>{ if (+document.getElementById('s'+i).value===0){ a.pause(); a.volume=0; } }, 8000);
 }
 
-buildRows();
+build();
 </script>
 </body>
 </html>
