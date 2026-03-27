@@ -9,19 +9,13 @@
 body { font-family: monospace; background: #111; color: #ddd; font-size: 13px; }
 h1 { color: #7cf; padding: 12px 16px 8px; font-size: 15px; border-bottom: 1px solid #333; }
 .grid-header {
-  display: grid;
-  grid-template-columns: 1fr 80px 90px 70px 80px;
-  gap: 4px; padding: 6px 8px;
-  background: #1a1a1a; color: #666; font-size: 11px;
-  border-bottom: 1px solid #333;
-  position: sticky; top: 0; z-index: 10;
+  display: grid; grid-template-columns: 1fr 80px 90px 70px 80px;
+  gap: 4px; padding: 6px 8px; background: #1a1a1a; color: #666; font-size: 11px;
+  border-bottom: 1px solid #333; position: sticky; top: 0; z-index: 10;
 }
 .row {
-  display: grid;
-  grid-template-columns: 1fr 80px 90px 70px 80px;
-  gap: 4px; padding: 8px 8px;
-  border-bottom: 1px solid #1e1e1e;
-  align-items: center;
+  display: grid; grid-template-columns: 1fr 80px 90px 70px 80px;
+  gap: 4px; padding: 8px 8px; border-bottom: 1px solid #1e1e1e; align-items: center;
 }
 .row.playing { background: #0a1a0a; }
 .info { min-width: 0; }
@@ -48,7 +42,8 @@ select { background:#222; color:#aaa; border:1px solid #444; padding:3px 2px; fo
 
 <script>
 const BASE = '/rainmixerdebug/';
-const FADE = 2.0; // クロスフェード秒数
+const FADE_SEC = 2.0;   // クロスフェード秒数
+const FADE_STEP = 50;   // ms単位の更新間隔
 
 const files = [
   {f:'Firefly_audio_gusty_wind_sound_variation1.wav',d:'突風・強風 v1',lv:4},
@@ -74,34 +69,27 @@ const files = [
   {f:'Firefly_audio_whistling_wind_sound_variation4.wav',d:'ヒュー風 v4',lv:4},
 ];
 
-const RAND_SEC = [0,30,60,90,120,180];
-const RAND_LBL = ['0(なし)','1(30s)','2(60s)','3(90s)','4(2m)','5(3m)'];
+const RAND_SEC  = [0,30,60,90,120,180];
+const RAND_LBL  = ['0(なし)','1(30s)','2(60s)','3(90s)','4(2m)','5(3m)'];
 
-// Web Audio APIでクロスフェード対応
-let actx = null;
-function getCtx() {
-  if (!actx) actx = new (window.AudioContext || window.webkitAudioContext)();
-  return actx;
-}
-
-// 各トラックの状態
-const tracks = files.map(() => ({
-  audioA: null, audioB: null,
-  gainA: null, gainB: null,
-  sourceA: null, sourceB: null,
-  vol: 0, rand: 0, randTimer: null,
-  active: 'A', fadeTimer: null
-}));
+// トラックごとにA/B 2枚のAudioを持ちクロスフェードでループ
+const tracks = files.map(it => {
+  const url = BASE + it.f;
+  const a = new Audio(url);
+  const b = new Audio(url);
+  a.preload = b.preload = 'auto';
+  return { a, b, active:'a', vol:0, fading:false, fadeTimer:null, randTimer:null };
+});
 
 function lvC(n){return['','lvl-1','lvl-2','lvl-3','lvl-4','lvl-5'][n];}
 
 function build() {
   const c = document.getElementById('rows');
-  files.forEach((it, i) => {
+  files.forEach((it,i) => {
     const row = document.createElement('div');
-    row.className = 'row'; row.id = 'r'+i;
-    const stars = '★'.repeat(it.lv)+'☆'.repeat(5-it.lv);
-    row.innerHTML = `
+    row.className='row'; row.id='r'+i;
+    const stars='★'.repeat(it.lv)+'☆'.repeat(5-it.lv);
+    row.innerHTML=`
       <div class="info">
         <div class="fname" title="${it.f}">${it.f}</div>
         <div class="desc">${it.d}</div>
@@ -113,113 +101,95 @@ function build() {
         ${RAND_LBL.map((l,v)=>`<option value="${v}">${l}</option>`).join('')}
       </select>`;
     c.appendChild(row);
+
+    // timeupdate でクロスフェード開始を監視
+    tracks[i].a.addEventListener('timeupdate', ()=>checkXfade(i,'a'));
+    tracks[i].b.addEventListener('timeupdate', ()=>checkXfade(i,'b'));
   });
 }
 
-function getOrCreateTrack(i) {
+function checkXfade(i, which) {
   const t = tracks[i];
-  const ctx = getCtx();
-  const url = BASE + files[i].f;
-
-  function makeAudio(gain) {
-    const a = new Audio(url);
-    a.loop = false;
-    a.crossOrigin = 'anonymous';
-    const src = ctx.createMediaElementSource(a);
-    src.connect(gain);
-    return a;
-  }
-
-  if (!t.gainA) {
-    t.gainA = ctx.createGain(); t.gainA.gain.value = 0; t.gainA.connect(ctx.destination);
-    t.gainB = ctx.createGain(); t.gainB.gain.value = 0; t.gainB.connect(ctx.destination);
-    t.audioA = makeAudio(t.gainA);
-    t.audioB = makeAudio(t.gainB);
-
-    // ループクロスフェード
-    t.audioA.addEventListener('timeupdate', () => scheduleXfade(i, 'A'));
-    t.audioB.addEventListener('timeupdate', () => scheduleXfade(i, 'B'));
-  }
-  return t;
-}
-
-function scheduleXfade(i, which) {
-  const t = tracks[i];
-  if (t.vol === 0) return;
+  if (t.vol === 0 || t.fading) return;
   if (t.active !== which) return;
-  const audio = which === 'A' ? t.audioA : t.audioB;
-  if (!audio.duration || audio.duration <= 0) return;
-  const remaining = audio.duration - audio.currentTime;
-  if (remaining > FADE || remaining <= 0) return;
+  const cur = which==='a' ? t.a : t.b;
+  const nxt = which==='a' ? t.b : t.a;
+  if (!cur.duration || cur.duration === Infinity) return;
+  const rem = cur.duration - cur.currentTime;
+  if (rem > FADE_SEC || rem <= 0) return;
 
   // クロスフェード開始
-  const ctx = getCtx();
-  const target = which === 'A' ? 'B' : 'A';
-  const audioNext = target === 'A' ? t.audioA : t.audioB;
-  const gainCur = which === 'A' ? t.gainA : t.gainB;
-  const gainNext = target === 'A' ? t.gainA : t.gainB;
-  const vol = t.vol / 100;
+  t.fading = true;
+  nxt.currentTime = 0;
+  nxt.volume = 0;
+  nxt.play().catch(()=>{});
 
-  // 次のオーディオを頭から再生
-  audioNext.currentTime = 0;
-  audioNext.play().catch(()=>{});
-  gainNext.gain.setValueAtTime(0, ctx.currentTime);
-  gainNext.gain.linearRampToValueAtTime(vol, ctx.currentTime + remaining);
-  gainCur.gain.setValueAtTime(vol, ctx.currentTime);
-  gainCur.gain.linearRampToValueAtTime(0, ctx.currentTime + remaining);
-
-  t.active = target;
+  const targetVol = t.vol / 100;
+  const steps = Math.ceil(rem * 1000 / FADE_STEP);
+  let step = 0;
+  t.fadeTimer = setInterval(() => {
+    step++;
+    const prog = Math.min(step / steps, 1);
+    cur.volume = targetVol * (1 - prog);
+    nxt.volume = targetVol * prog;
+    if (prog >= 1) {
+      clearInterval(t.fadeTimer);
+      cur.pause(); cur.currentTime = 0; cur.volume = 0;
+      t.active = which==='a' ? 'b' : 'a';
+      t.fading = false;
+    }
+  }, FADE_STEP);
 }
 
 function setVol(i, v) {
-  tracks[i].vol = v;
+  const t = tracks[i];
+  t.vol = v;
   document.getElementById('n'+i).firstChild.nodeValue = v;
-  const ctx = getCtx();
-  const t = getOrCreateTrack(i);
-  const gainCur = t.active === 'A' ? t.gainA : t.gainB;
-  const audioCur = t.active === 'A' ? t.audioA : t.audioB;
-
-  gainCur.gain.cancelScheduledValues(ctx.currentTime);
-  gainCur.gain.setValueAtTime(v/100, ctx.currentTime);
+  const cur = t.active==='a' ? t.a : t.b;
 
   if (v >= 1) {
-    if (audioCur.paused) audioCur.play().catch(()=>{});
-    document.getElementById('d'+i).style.display = 'inline';
+    cur.volume = v / 100;
+    if (cur.paused) { cur.currentTime=0; cur.play().catch(()=>{}); }
+    document.getElementById('d'+i).style.display='inline';
     document.getElementById('r'+i).classList.add('playing');
   } else {
-    t.audioA.pause(); t.audioA.currentTime = 0;
-    t.audioB.pause(); t.audioB.currentTime = 0;
-    t.gainA.gain.setValueAtTime(0, ctx.currentTime);
-    t.gainB.gain.setValueAtTime(0, ctx.currentTime);
-    t.active = 'A';
-    document.getElementById('d'+i).style.display = 'none';
+    if (t.fadeTimer) { clearInterval(t.fadeTimer); t.fadeTimer=null; }
+    t.fading=false;
+    t.a.pause(); t.a.currentTime=0; t.a.volume=0;
+    t.b.pause(); t.b.currentTime=0; t.b.volume=0;
+    t.active='a';
+    document.getElementById('d'+i).style.display='none';
     document.getElementById('r'+i).classList.remove('playing');
   }
 }
 
 function setRand(i, v) {
   const t = tracks[i];
-  t.rand = v;
-  if (t.randTimer) { clearInterval(t.randTimer); t.randTimer = null; }
+  if (t.randTimer) { clearInterval(t.randTimer); t.randTimer=null; }
   if (!v) return;
-  t.randTimer = setInterval(() => fireRand(i), RAND_SEC[v]*1000);
+  t.randTimer = setInterval(()=>fireRand(i), RAND_SEC[v]*1000);
 }
 
 function fireRand(i) {
-  if (tracks[i].vol > 0) return;
-  const t = getOrCreateTrack(i);
-  const ctx = getCtx();
-  const gain = t.gainA;
-  const audio = t.audioA;
-  audio.currentTime = 0;
-  gain.gain.setValueAtTime(0, ctx.currentTime);
-  gain.gain.linearRampToValueAtTime(0.6, ctx.currentTime + 1.0);
-  audio.play().catch(()=>{});
-  setTimeout(() => {
-    if (tracks[i].vol === 0) {
-      gain.gain.linearRampToValueAtTime(0, ctx.currentTime + 2.0);
-      setTimeout(() => { if(tracks[i].vol===0) audio.pause(); }, 2500);
-    }
+  const t = tracks[i];
+  if (t.vol > 0) return;
+  const a = t.a;
+  a.currentTime=0; a.volume=0;
+  a.play().catch(()=>{});
+  // フェードイン
+  let vol=0;
+  const inTimer = setInterval(()=>{
+    vol = Math.min(vol+0.05, 0.6); a.volume=vol;
+    if(vol>=0.6) clearInterval(inTimer);
+  }, 80);
+  // 6秒後フェードアウト
+  setTimeout(()=>{
+    if(t.vol>0) return;
+    let v2=a.volume;
+    const outTimer=setInterval(()=>{
+      v2=Math.max(v2-0.04,0); a.volume=v2;
+      if(v2<=0){ clearInterval(outTimer); a.pause(); }
+    },80);
   }, 6000);
 }
 
