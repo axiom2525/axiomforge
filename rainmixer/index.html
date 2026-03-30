@@ -120,7 +120,7 @@ const LAYERS = {
 const allTracks = [];
 ['base','env','sp'].forEach(layer => {
   LAYERS[layer].forEach((item, li) => {
-    const url = BASE + item.f;
+    const url = BASE + encodeURIComponent(item.f);
     const a = new Audio(url), b = new Audio(url);
     a.preload = b.preload = 'auto';
     allTracks.push({
