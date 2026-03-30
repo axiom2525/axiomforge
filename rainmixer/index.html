@@ -23,19 +23,24 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;backgrou
 .save-slot{flex:1;font-size:12px;padding:6px 8px;border:0.5px solid #b0b8c8;border-radius:8px;background:transparent;color:#6b7280;cursor:pointer;text-align:center;line-height:1.5;}
 .save-slot.saved{background:#f5f6f8;color:#1a1d26;}
 .save-slot-sub{font-size:10px;color:#9098aa;display:block;}
+.my-menu{position:absolute;background:#fff;border:0.5px solid #dde1ea;border-radius:8px;box-shadow:0 4px 12px rgba(0,0,0,0.12);z-index:100;min-width:120px;overflow:hidden;}
+.my-menu-item{display:block;width:100%;padding:10px 16px;font-size:13px;color:#1a1d26;background:transparent;border:none;text-align:left;cursor:pointer;}
+.my-menu-item:hover{background:#f5f6f8;}
+.my-menu-item.danger{color:#e53e3e;}
+.my-menu-overlay{position:fixed;inset:0;z-index:99;}
 .tab-bar{display:flex;border-bottom:0.5px solid #dde1ea;}
 .tab{flex:1;padding:10px 0;text-align:center;font-size:13px;font-weight:500;color:#9098aa;cursor:pointer;border:none;border-bottom:2px solid transparent;background:transparent;}
 .tab.active{color:#1a1d26;border-bottom:2px solid #378ADD;}
 .tab-panel{display:none;}
 .tab-panel.active{display:block;}
 .track{padding:7px 20px;display:flex;align-items:center;gap:10px;border-top:0.5px solid #eef0f5;}
-.track-name{font-size:13px;color:#1a1d26;width:84px;flex-shrink:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.track-name{font-size:11px;color:#1a1d26;width:84px;flex-shrink:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
 .track-slider{flex:1;min-width:0;}
 .track-slider input{width:100%;}
 .track-vol{font-size:12px;color:#9098aa;width:26px;text-align:right;flex-shrink:0;}
 .sp-header-row{display:grid;grid-template-columns:84px 1fr 26px 46px 64px;gap:10px;padding:5px 20px 3px;border-top:0.5px solid #dde1ea;align-items:center;}
 .sp-track-row{display:grid;grid-template-columns:84px 1fr 26px 46px 64px;gap:10px;padding:7px 20px;border-top:0.5px solid #eef0f5;align-items:center;}
-.sp-track-name{font-size:13px;color:#1a1d26;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.sp-track-name{font-size:11px;color:#1a1d26;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
 .sp-col-header{font-size:10px;color:#9098aa;text-align:center;}
 .sp-select{font-size:11px;padding:3px 4px;border:0.5px solid #b0b8c8;border-radius:4px;background:#f5f6f8;color:#1a1d26;width:64px;}
 .now-section{padding:12px 20px;border-top:0.5px solid #dde1ea;}
@@ -53,7 +58,7 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;backgrou
 <div class="app">
   <div class="app-header">
     <div>
-      <div class="app-title">雨音工房 <span style="font-size:12px;color:#9098aa;font-weight:400;">ver0.04</span></div>
+      <div class="app-title">雨音工房 <span style="font-size:12px;color:#9098aa;font-weight:400;">ver0.05</span></div>
       <div class="app-sub">～Ambient Rain～</div>
     </div>
     <button class="btn-play" id="playBtn" onclick="togglePlay()">▶ 再生</button>
@@ -256,30 +261,70 @@ function buildSaveRow(){
   const slots=loadMySlots();
   slots.forEach((s,si)=>{
     const btn=document.createElement('button');
-    btn.className='save-slot'+(s?'  saved':'');
-    btn.innerHTML=`MY ${si+1}<span class="save-slot-sub">${s?'読込 / 保存':'空き'}</span>`;
-    btn.onclick=()=>onSaveSlot(si);
+    btn.className='save-slot'+(s?' saved':'');
+    btn.innerHTML=`MY ${si+1}<span class="save-slot-sub">${s?'保存済み':'空き'}</span>`;
+    btn.onclick=(e)=>onSaveSlot(si,e);
     row.appendChild(btn);
   });
 }
 
-function onSaveSlot(si){
+function closeMyMenu(){
+  document.querySelectorAll('.my-menu,.my-menu-overlay').forEach(el=>el.remove());
+}
+
+function onSaveSlot(si,e){
   const slots=loadMySlots();
-  if(slots[si]){
-    // 読み込み
-    const saved=slots[si];
-    allTracks.forEach((t,i)=>{
-      document.getElementById('s'+i).value=saved.vols[i]||0;
-      onVol(i,saved.vols[i]||0);
-    });
-    // 長押し想定で今は1タップで読込。保存は別ボタン検討余地あり
-  } else {
-    // 保存
-    const vols=allTracks.map((t,i)=>t.vol);
-    slots[si]={vols};
-    saveMySlots(slots);
-    buildSaveRow();
+  closeMyMenu();
+  if(!slots[si]){
+    // 空き → 即保存
+    slots[si]={vols:allTracks.map(t=>t.vol)};
+    saveMySlots(slots); buildSaveRow(); return;
   }
+  // 保存済み → メニュー表示
+  const overlay=document.createElement('div');
+  overlay.className='my-menu-overlay';
+  overlay.onclick=closeMyMenu;
+  document.body.appendChild(overlay);
+
+  const menu=document.createElement('div');
+  menu.className='my-menu';
+  const rect=e.currentTarget.getBoundingClientRect();
+  menu.style.cssText=`position:fixed;top:${rect.bottom+4}px;left:${rect.left}px;`;
+
+  const loadBtn=document.createElement('button');
+  loadBtn.className='my-menu-item'; loadBtn.textContent='読み込む';
+  loadBtn.onclick=()=>{
+    closeMyMenu();
+    const saved=loadMySlots()[si];
+    if(!saved) return;
+    allTracks.forEach((t,i)=>{
+      const v=saved.vols[i]||0;
+      document.getElementById('s'+i).value=v;
+      onVol(i,v);
+    });
+    if(!isPlaying) togglePlay();
+  };
+
+  const saveBtn=document.createElement('button');
+  saveBtn.className='my-menu-item'; saveBtn.textContent='上書き保存';
+  saveBtn.onclick=()=>{
+    closeMyMenu();
+    const slots=loadMySlots();
+    slots[si]={vols:allTracks.map(t=>t.vol)};
+    saveMySlots(slots); buildSaveRow();
+  };
+
+  const delBtn=document.createElement('button');
+  delBtn.className='my-menu-item danger'; delBtn.textContent='削除';
+  delBtn.onclick=()=>{
+    closeMyMenu();
+    const slots=loadMySlots();
+    slots[si]=null;
+    saveMySlots(slots); buildSaveRow();
+  };
+
+  menu.appendChild(loadBtn); menu.appendChild(saveBtn); menu.appendChild(delBtn);
+  document.body.appendChild(menu);
 }
 
 // タイマーUI
