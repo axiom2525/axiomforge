@@ -211,5 +211,182 @@ function setIntv(i, v) {
 
 build();
 </script>
+
+<!-- 空間エフェクトパネル -->
+<div style="margin-top:32px;padding:16px;background:#1a1a1a;border-top:2px solid #333;">
+  <div style="color:#7cf;font-size:14px;margin-bottom:16px;">🎧 空間エフェクト（全トラック共通）</div>
+  <div style="color:#666;font-size:11px;margin-bottom:12px;">※ Web Audio APIを使用。スライダーを動かすと音声コンテキストが初期化されます。</div>
+
+  <div id="fx-rows"></div>
+  <button onclick="resetFx()" style="margin-top:14px;padding:8px 20px;background:#222;color:#aaa;border:1px solid #444;border-radius:6px;font-size:12px;cursor:pointer;">全リセット</button>
+</div>
+
+<script>
+// エフェクト定義
+const FX = [
+  { id:'fx-x',      label:'x（左右）',    min:-1,   max:1,    step:0.01, def:0,    unit:'',   desc:'左←→右' },
+  { id:'fx-z',      label:'z（距離）',    min:0,    max:20,   step:0.1,  def:1,    unit:'',   desc:'近い←→遠い' },
+  { id:'fx-y',      label:'y（高さ）',    min:-5,   max:5,    step:0.1,  def:0,    unit:'',   desc:'下←→上' },
+  { id:'fx-spread', label:'spread（広がり）', min:0, max:1,   step:0.01, def:0,    unit:'',   desc:'点←→面' },
+  { id:'fx-filter', label:'filter（距離感）', min:200,max:20000,step:100, def:20000,unit:'Hz', desc:'こもり←→クリア' },
+  { id:'fx-reverb', label:'reverb（空間）',   min:0, max:1,   step:0.01, def:0,    unit:'',   desc:'なし←→強' },
+  { id:'fx-vel',    label:'velocity（動き）', min:0, max:10,  step:0.1,  def:0,    unit:'',   desc:'静止←→高速移動（x軸）' },
+  { id:'fx-rand',   label:'random（揺らぎ）', min:0, max:1,   step:0.01, def:0,    unit:'',   desc:'なし←→大' },
+  { id:'fx-dens',   label:'density（密度）',  min:0.5,max:3,  step:0.05, def:1,    unit:'x',  desc:'薄い←→密' },
+];
+
+// Web Audio APIセットアップ
+let fxCtx = null, fxPanner = null, fxFilter = null, fxDryGain = null, fxWetGain = null, fxConvolver = null;
+let velTimer = null, randTimer = null;
+let fxState = {};
+FX.forEach(f => { fxState[f.id] = f.def; });
+
+function initFxCtx() {
+  if (fxCtx) return;
+  fxCtx = new (window.AudioContext || window.webkitAudioContext)();
+  // チェーン: destination ← dryGain ← panner ← filter ← input
+  //           destination ← wetGain ← convolver ← panner
+  fxFilter   = fxCtx.createBiquadFilter();
+  fxFilter.type = 'lowpass';
+  fxFilter.frequency.value = 20000;
+
+  fxPanner = fxCtx.createPanner();
+  fxPanner.panningModel = 'HRTF';
+  fxPanner.distanceModel = 'inverse';
+  fxPanner.refDistance = 1;
+  fxPanner.maxDistance = 20;
+  fxPanner.positionX.value = 0;
+  fxPanner.positionY.value = 0;
+  fxPanner.positionZ.value = 1;
+
+  fxDryGain = fxCtx.createGain(); fxDryGain.gain.value = 1;
+  fxWetGain = fxCtx.createGain(); fxWetGain.gain.value = 0;
+  fxConvolver = fxCtx.createConvolver();
+  makeIR();
+
+  fxFilter.connect(fxPanner);
+  fxPanner.connect(fxDryGain); fxDryGain.connect(fxCtx.destination);
+  fxPanner.connect(fxConvolver); fxConvolver.connect(fxWetGain); fxWetGain.connect(fxCtx.destination);
+
+  // 既存のaudioを再接続
+  tracks.forEach(t => {
+    [t.a, t.b].forEach(audio => {
+      try {
+        const src = fxCtx.createMediaElementSource(audio);
+        src.connect(fxFilter);
+      } catch(e) {}
+    });
+  });
+}
+
+function makeIR(wet=0) {
+  if (!fxCtx) return;
+  const len = fxCtx.sampleRate * (0.5 + wet * 3);
+  const buf = fxCtx.createBuffer(2, len, fxCtx.sampleRate);
+  for (let c=0; c<2; c++) {
+    const d = buf.getChannelData(c);
+    for (let i=0; i<len; i++) {
+      d[i] = (Math.random()*2-1) * Math.pow(1-i/len, 2-wet);
+    }
+  }
+  fxConvolver.buffer = buf;
+}
+
+function buildFx() {
+  const c = document.getElementById('fx-rows');
+  FX.forEach(f => {
+    const row = document.createElement('div');
+    row.style.cssText = 'display:flex;align-items:center;gap:10px;margin-bottom:10px;flex-wrap:wrap;';
+    row.innerHTML = `
+      <div style="width:160px;font-size:12px;color:#aaa;">${f.label}</div>
+      <input type="range" min="${f.min}" max="${f.max}" step="${f.step}" value="${f.def}" id="${f.id}"
+        style="width:140px;accent-color:#f7a;" oninput="onFx('${f.id}',+this.value)">
+      <span id="${f.id}-val" style="color:#f7a;font-size:12px;width:60px;">${f.def}${f.unit}</span>
+      <span style="color:#555;font-size:11px;">${f.desc}</span>
+    `;
+    c.appendChild(row);
+  });
+}
+
+function onFx(id, v) {
+  fxState[id] = v;
+  document.getElementById(id+'-val').textContent = v + (FX.find(f=>f.id===id).unit||'');
+  initFxCtx();
+  applyFx();
+}
+
+function applyFx() {
+  if (!fxCtx) return;
+  const x = fxState['fx-x'];
+  const z = fxState['fx-z'];
+  const y = fxState['fx-y'];
+  const spread = fxState['fx-spread'];
+
+  // 位置
+  fxPanner.positionX.value = x * 5;
+  fxPanner.positionZ.value = z;
+  fxPanner.positionY.value = y;
+  fxPanner.coneOuterAngle = 360 * (1 - spread * 0.5 + 0.5);
+
+  // フィルター
+  fxFilter.frequency.value = fxState['fx-filter'];
+
+  // リバーブ
+  fxWetGain.gain.value = fxState['fx-reverb'];
+  fxDryGain.gain.value = 1 - fxState['fx-reverb'] * 0.5;
+  makeIR(fxState['fx-reverb']);
+
+  // velocity（x軸を往復移動）
+  if (velTimer) { clearInterval(velTimer); velTimer=null; }
+  const vel = fxState['fx-vel'];
+  if (vel > 0) {
+    let phase = 0;
+    velTimer = setInterval(() => {
+      phase += 0.05 * vel;
+      fxPanner.positionX.value = Math.sin(phase) * 5;
+      document.getElementById('fx-x-val').textContent = fxPanner.positionX.value.toFixed(2);
+    }, 50);
+  }
+
+  // random（音量をゆらぐ）
+  if (randTimer) { clearInterval(randTimer); randTimer=null; }
+  const rand = fxState['fx-rand'];
+  if (rand > 0) {
+    randTimer = setInterval(() => {
+      const jitter = 1 - rand * Math.random() * 0.3;
+      fxDryGain.gain.value = (1 - fxState['fx-reverb'] * 0.5) * jitter;
+    }, 200);
+  }
+
+  // density（再生速度で疑似密度）
+  const dens = fxState['fx-dens'];
+  tracks.forEach(t => {
+    [t.a, t.b].forEach(audio => {
+      try { audio.playbackRate = dens; } catch(e) {}
+    });
+  });
+}
+
+function resetFx() {
+  FX.forEach(f => {
+    fxState[f.id] = f.def;
+    document.getElementById(f.id).value = f.def;
+    document.getElementById(f.id+'-val').textContent = f.def + (f.unit||'');
+  });
+  if (velTimer) { clearInterval(velTimer); velTimer=null; }
+  if (randTimer) { clearInterval(randTimer); randTimer=null; }
+  if (fxCtx) {
+    fxPanner.positionX.value = 0;
+    fxPanner.positionZ.value = 1;
+    fxPanner.positionY.value = 0;
+    fxFilter.frequency.value = 20000;
+    fxWetGain.gain.value = 0;
+    fxDryGain.gain.value = 1;
+    tracks.forEach(t => { [t.a,t.b].forEach(a=>{ try{a.playbackRate=1;}catch(e){} }); });
+  }
+}
+
+buildFx();
+</script>
 </body>
 </html>
