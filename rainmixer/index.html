@@ -1,0 +1,306 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>雨音ミキサー</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0;}
+body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;background:#f0f2f5;min-height:100vh;padding:16px;}
+.app{max-width:480px;margin:0 auto;background:#fff;border:0.5px solid #dde1ea;border-radius:12px;overflow:hidden;}
+.app-header{padding:14px 20px;border-bottom:0.5px solid #dde1ea;display:flex;align-items:center;justify-content:space-between;}
+.app-title{font-size:17px;font-weight:500;color:#1a1d26;}
+.app-sub{font-size:12px;color:#9098aa;margin-top:1px;}
+.btn-reset{font-size:12px;padding:6px 14px;border:0.5px solid #b0b8c8;border-radius:8px;background:transparent;color:#6b7280;cursor:pointer;}
+.btn-reset:active{background:#eef0f5;}
+.layer{border-bottom:0.5px solid #dde1ea;}
+.layer-header{padding:10px 20px 8px;display:flex;align-items:center;gap:8px;}
+.layer-badge{font-size:11px;font-weight:500;padding:2px 8px;border-radius:100px;}
+.badge-base{background:#E1F5EE;color:#085041;}
+.badge-env{background:#E6F1FB;color:#0C447C;}
+.badge-sp{background:#FAEEDA;color:#633806;}
+.layer-title{font-size:13px;font-weight:500;color:#1a1d26;}
+.track{padding:7px 20px;display:flex;align-items:center;gap:10px;border-top:0.5px solid #eef0f5;}
+.track-name{font-size:13px;color:#1a1d26;width:84px;flex-shrink:0;}
+.track-slider{flex:1;min-width:0;}
+.track-slider input[type=range]{width:100%;accent-color:#3b6ef5;}
+.track-vol{font-size:12px;color:#9098aa;width:26px;text-align:right;flex-shrink:0;}
+.sp-col-header{font-size:10px;color:#9098aa;text-align:center;}
+.sp-check{display:flex;justify-content:center;flex-shrink:0;width:46px;}
+.sp-check input{width:15px;height:15px;accent-color:#3b6ef5;}
+.sp-select{font-size:11px;padding:3px 4px;border:0.5px solid #b0b8c8;border-radius:4px;background:#f5f6f8;color:#1a1d26;width:64px;flex-shrink:0;}
+.sp-header-row{display:grid;grid-template-columns:84px 1fr 26px 46px 64px;gap:10px;padding:5px 20px 3px;border-top:0.5px solid #dde1ea;align-items:center;}
+.sp-track-row{display:grid;grid-template-columns:84px 1fr 26px 46px 64px;gap:10px;padding:7px 20px;border-top:0.5px solid #eef0f5;align-items:center;}
+</style>
+</head>
+<body>
+<div class="app">
+  <div class="app-header">
+    <div>
+      <div class="app-title">雨音ミキサー</div>
+      <div class="app-sub">Ambient Rain</div>
+    </div>
+    <button class="btn-reset" onclick="resetAll()">リセット</button>
+  </div>
+
+  <!-- ベース音 -->
+  <div class="layer">
+    <div class="layer-header">
+      <span class="layer-badge badge-base">ベース音</span>
+      <span class="layer-title">降り方</span>
+    </div>
+    <div id="layer-base"></div>
+  </div>
+
+  <!-- 環境音 -->
+  <div class="layer">
+    <div class="layer-header">
+      <span class="layer-badge badge-env">環境音</span>
+      <span class="layer-title">場所・素材・生き物</span>
+    </div>
+    <div id="layer-env"></div>
+  </div>
+
+  <!-- 特殊 -->
+  <div class="layer">
+    <div class="layer-header">
+      <span class="layer-badge badge-sp">特殊</span>
+      <span class="layer-title">動き・イベント</span>
+    </div>
+    <div class="sp-header-row">
+      <span></span><span></span><span></span>
+      <span class="sp-col-header">揺らぎ</span>
+      <span class="sp-col-header">インターバル</span>
+    </div>
+    <div id="layer-sp"></div>
+  </div>
+</div>
+
+<script>
+const BASE = '/rainmixer/';
+const FADE_SEC = 3.0, FADE_STEP = 50;
+const INTV_SEC = [0,10,20,30,60,90];
+const INTV_LBL = ['なし','10秒','20秒','30秒','60秒','90秒'];
+
+const LAYERS = {
+  base: [
+    {f:'Firefly_audio_light_rain_falling_softly,_gentle_raindrops,_natur_variation1.wav', n:'少雨 1'},
+    {f:'Firefly_audio_light_rain_falling_softly,_gentle_raindrops,_natur_variation2.wav', n:'少雨 2'},
+    {f:'Firefly_audio_light_rain_falling_softly,_gentle_raindrops,_natur_variation3.wav', n:'少雨 3'},
+    {f:'Firefly_audio_light_rain_falling_softly,_gentle_raindrops,_natur_variation4.wav', n:'少雨 4'},
+    {f:'Firefly_audio_rain_hitting_asphalt_sound_variation1.wav', n:'中雨 1'},
+    {f:'Firefly_audio_rain_hitting_asphalt_sound_variation2.wav', n:'中雨 2'},
+    {f:'Firefly_audio_heavy_rain,_dense_rainfall,_no_wind,_no_thunder,_i_variation2.wav', n:'強雨'},
+    {f:'Firefly_audio_heavy_rain,_dense_rainfall,_no_wind,_no_thunder,_i_variation4.wav', n:'豪雨'},
+  ],
+  env: [
+    {f:'Firefly_audio_rain_hitting_metal_roof_sound_variation1.wav', n:'金属屋根 1'},
+    {f:'Firefly_audio_rain_hitting_metal_roof_sound_variation2.wav', n:'金属屋根 2'},
+    {f:'Firefly_audio_rain_hitting_puddles_sound_variation1.wav', n:'水たまり 1'},
+    {f:'Firefly_audio_rain_hitting_puddles_sound_variation2.wav', n:'水たまり 2'},
+    {f:'Firefly_audio_rain_hitting_puddles_sound_variation3.wav', n:'水たまり 3'},
+    {f:'Firefly_audio_rain_hitting_tent_fabric_sound_variation1.wav', n:'テント 1'},
+    {f:'Firefly_audio_rain_hitting_tent_fabric_sound_variation3.wav', n:'テント 2'},
+    {f:'Firefly_audio_isolated_frog_croaking,_distant,_minimal_ambient_n_variation1.wav', n:'カエル 1'},
+    {f:'Firefly_audio_isolated_frog_croaking,_distant,_minimal_ambient_n_variation2.wav', n:'カエル 2'},
+  ],
+  sp: [
+    {f:'Firefly_audio_sound_of_thunder_variation1.wav', n:'遠雷 1'},
+    {f:'Firefly_audio_sound_of_thunder_variation2.wav', n:'遠雷 2'},
+    {f:'Firefly_audio_thunderclap_variation1.wav', n:'雷鳴 1'},
+    {f:'Firefly_audio_thunderclap_variation2.wav', n:'雷鳴 2'},
+    {f:'Firefly_audio_thunderclap_variation3.wav', n:'雷鳴 3'},
+    {f:'Firefly_audio_gusty_wind_sound_variation1.wav', n:'突風'},
+    {f:'Firefly_audio_whistling_wind_sound_variation1.wav', n:'口笛風 1'},
+    {f:'Firefly_audio_whistling_wind_sound_variation4.wav', n:'口笛風 2'},
+  ]
+};
+
+// 全トラックをフラットに持つ
+const allTracks = [];
+['base','env','sp'].forEach(layer => {
+  LAYERS[layer].forEach((item, li) => {
+    const url = BASE + item.f;
+    const a = new Audio(url), b = new Audio(url);
+    a.preload = b.preload = 'auto';
+    allTracks.push({
+      layer, file:item.f, name:item.name||item.n,
+      a, b, active:'a', vol:0, intv:0,
+      fading:false, fadeTimer:null, intvTimer:null,
+      shake:false, shakeTimer:null
+    });
+  });
+});
+
+// インデックス逆引き
+function tidx(layer, li) {
+  let base = 0;
+  if(layer==='env') base = LAYERS.base.length;
+  else if(layer==='sp') base = LAYERS.base.length + LAYERS.env.length;
+  return base + li;
+}
+
+function buildLayer(layer, containerId, isSp) {
+  const c = document.getElementById(containerId);
+  LAYERS[layer].forEach((item, li) => {
+    const i = tidx(layer, li);
+    const row = document.createElement('div');
+    if(isSp){
+      row.className = 'sp-track-row';
+      row.innerHTML = `
+        <span style="font-size:13px;color:#1a1d26;">${item.n}</span>
+        <input type="range" min="0" max="100" value="0" id="s${i}" style="width:100%;accent-color:#f59e0b;" oninput="onVol(${i},+this.value)">
+        <span id="n${i}" style="font-size:12px;color:#9098aa;text-align:right;">0</span>
+        <div style="display:flex;justify-content:center;">
+          <input type="checkbox" id="sh${i}" style="width:15px;height:15px;accent-color:#f59e0b;" onchange="onShake(${i},this.checked)">
+        </div>
+        <select id="intv${i}" style="font-size:11px;padding:3px 4px;border:0.5px solid #b0b8c8;border-radius:4px;background:#f5f6f8;color:#1a1d26;width:64px;" onchange="onIntv(${i},+this.value)">
+          ${INTV_LBL.map((l,v)=>`<option value="${v}">${l}</option>`).join('')}
+        </select>`;
+    } else {
+      row.className = 'track';
+      row.innerHTML = `
+        <span class="track-name">${item.n}</span>
+        <div class="track-slider"><input type="range" min="0" max="100" value="0" id="s${i}" oninput="onVol(${i},+this.value)"></div>
+        <span class="track-vol" id="n${i}">0</span>`;
+    }
+    c.appendChild(row);
+  });
+}
+
+buildLayer('base','layer-base',false);
+buildLayer('env','layer-env',false);
+buildLayer('sp','layer-sp',true);
+
+// クロスフェード監視
+setInterval(() => {
+  allTracks.forEach((t,i) => {
+    if(t.vol===0||t.fading||t.intv>0) return;
+    const which = t.active;
+    const cur = which==='a'?t.a:t.b;
+    const nxt = which==='a'?t.b:t.a;
+    if(!cur.duration||cur.duration===Infinity) return;
+    const rem = cur.duration - cur.currentTime;
+    if(rem>FADE_SEC||rem<=0) return;
+    t.fading=true;
+    nxt.currentTime=0; nxt.volume=0;
+    nxt.play().catch(()=>{});
+    const targetVol = t.vol/100;
+    const steps = Math.ceil(rem*1000/FADE_STEP);
+    let step=0;
+    t.fadeTimer = setInterval(()=>{
+      step++;
+      const prog=Math.min(step/steps,1);
+      const angle=prog*Math.PI/2;
+      cur.volume=targetVol*Math.cos(angle);
+      nxt.volume=targetVol*Math.sin(angle);
+      if(prog>=1){
+        clearInterval(t.fadeTimer);
+        cur.pause(); cur.currentTime=0; cur.volume=0;
+        t.active=which==='a'?'b':'a';
+        t.fading=false;
+      }
+    },FADE_STEP);
+  });
+},100);
+
+function onVol(i,v){
+  const t=allTracks[i];
+  t.vol=v;
+  document.getElementById('n'+i).textContent=v;
+  // ボリューム変更でインターバルリセット
+  if(t.intv!==0){
+    t.intv=0;
+    if(t.intvTimer){clearTimeout(t.intvTimer);t.intvTimer=null;}
+    document.getElementById('intv'+i).value=0;
+  }
+  const cur=t.active==='a'?t.a:t.b;
+  if(v>=1){
+    cur.volume=v/100;
+    if(cur.paused){cur.currentTime=0;cur.play().catch(()=>{});}
+  } else {
+    if(t.fadeTimer){clearInterval(t.fadeTimer);t.fadeTimer=null;}
+    t.fading=false;
+    t.a.pause();t.a.currentTime=0;t.a.volume=0;
+    t.b.pause();t.b.currentTime=0;t.b.volume=0;
+    t.active='a';
+  }
+}
+
+function onEnded(i){
+  const t=allTracks[i];
+  if(t.intv===0) return;
+  t.intvTimer=setTimeout(()=>playOnce(i),INTV_SEC[t.intv]*1000);
+}
+
+function stopLoop(i){
+  const t=allTracks[i];
+  if(t.fadeTimer){clearInterval(t.fadeTimer);t.fadeTimer=null;}
+  t.fading=false;
+  t.b.pause();t.b.currentTime=0;t.b.volume=0;
+  t.active='a';
+}
+
+function playOnce(i){
+  const t=allTracks[i];
+  if(t.intv===0) return;
+  stopLoop(i);
+  const a=t.a;
+  a.currentTime=0; a.volume=t.vol/100;
+  a.play().catch(()=>{});
+}
+
+function onIntv(i,v){
+  const t=allTracks[i];
+  t.intv=v;
+  if(t.intvTimer){clearTimeout(t.intvTimer);t.intvTimer=null;}
+  if(v===0){
+    const cur=t.active==='a'?t.a:t.b;
+    cur.volume=t.vol/100;
+    if(t.vol>=1&&cur.paused){cur.currentTime=0;cur.play().catch(()=>{});}
+    return;
+  }
+  playOnce(i);
+}
+
+// 揺らぎ（音量を小刻みにランダムで変動）
+function onShake(i,on){
+  const t=allTracks[i];
+  t.shake=on;
+  if(t.shakeTimer){clearInterval(t.shakeTimer);t.shakeTimer=null;}
+  if(!on) return;
+  t.shakeTimer=setInterval(()=>{
+    if(t.vol===0) return;
+    const base=t.vol/100;
+    const jitter=base*(0.75+Math.random()*0.5);
+    const cur=t.active==='a'?t.a:t.b;
+    cur.volume=Math.min(1,jitter);
+  },300);
+}
+
+// ended イベント登録
+allTracks.forEach((t,i)=>{
+  t.a.addEventListener('ended',()=>onEnded(i));
+  t.b.addEventListener('ended',()=>onEnded(i));
+});
+
+function resetAll(){
+  allTracks.forEach((t,i)=>{
+    t.vol=0;
+    if(t.fadeTimer){clearInterval(t.fadeTimer);t.fadeTimer=null;}
+    if(t.intvTimer){clearTimeout(t.intvTimer);t.intvTimer=null;}
+    if(t.shakeTimer){clearInterval(t.shakeTimer);t.shakeTimer=null;}
+    t.fading=false; t.intv=0; t.shake=false; t.active='a';
+    t.a.pause();t.a.currentTime=0;t.a.volume=0;
+    t.b.pause();t.b.currentTime=0;t.b.volume=0;
+    document.getElementById('s'+i).value=0;
+    document.getElementById('n'+i).textContent=0;
+    const intvEl=document.getElementById('intv'+i);
+    if(intvEl) intvEl.value=0;
+    const shEl=document.getElementById('sh'+i);
+    if(shEl) shEl.checked=false;
+  });
+}
+</script>
+</body>
+</html>
