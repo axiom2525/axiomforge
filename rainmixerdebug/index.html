@@ -30,7 +30,7 @@ select { background:#222; color:#aaa; border:1px solid #444; padding:3px 2px; fo
 </style>
 </head>
 <body>
-<h1>🌧 雨音ミキサー デバッグ</h1>
+<h1>🌧 雨音ミキサー デバッグ ver0.02</h1>
 <div class="grid-header">
   <div>ファイル / 説明</div>
   <div style="text-align:center">レベル</div>
@@ -42,7 +42,7 @@ select { background:#222; color:#aaa; border:1px solid #444; padding:3px 2px; fo
 
 <script>
 const BASE = '/rainmixerdebug/';
-const FADE_SEC = 2.0;
+const FADE_SEC = 3.0;
 const FADE_STEP = 50;
 
 const files = [
@@ -109,11 +109,14 @@ function build() {
     // ended イベントでインターバル待機開始
     tracks[i].a.addEventListener('ended', ()=>onEnded(i));
     tracks[i].b.addEventListener('ended', ()=>onEnded(i));
-
-    // timeupdate でクロスフェード開始を監視（ループ再生用）
-    tracks[i].a.addEventListener('timeupdate', ()=>checkXfade(i,'a'));
-    tracks[i].b.addEventListener('timeupdate', ()=>checkXfade(i,'b'));
   });
+
+  // setIntervalで全トラックのクロスフェードタイミングを監視（timeupdateより精度高い）
+  setInterval(() => {
+    tracks.forEach((t, i) => {
+      checkXfade(i, t.active);
+    });
+  }, 100);
 }
 
 // インターバル再生が終わったら待機→再生サイクル
