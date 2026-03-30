@@ -58,7 +58,7 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;backgrou
 <div class="app">
   <div class="app-header">
     <div>
-      <div class="app-title">雨音工房 <span style="font-size:12px;color:#9098aa;font-weight:400;">ver0.05</span></div>
+      <div class="app-title">雨音工房 <span style="font-size:12px;color:#9098aa;font-weight:400;">ver0.06</span></div>
       <div class="app-sub">～Ambient Rain～</div>
     </div>
     <button class="btn-play" id="playBtn" onclick="togglePlay()">▶ 再生</button>
@@ -466,6 +466,25 @@ function playOnce(i){
   if(t.intv===0) return;
   stopLoop(i);
   const a=t.a; a.currentTime=0; a.volume=t.vol/100; a.play().catch(()=>{});
+
+  // フェードアウト対象トラックは終端前にフェードアウト
+  if(t.fadeOut){
+    const checkFade=setInterval(()=>{
+      if(!a.duration||a.duration===Infinity||a.paused){return;}
+      const rem=a.duration-a.currentTime;
+      if(rem<=2.0&&rem>0){
+        clearInterval(checkFade);
+        const targetVol=t.vol/100;
+        const steps=Math.ceil(rem*1000/FADE_STEP); let step=0;
+        const fo=setInterval(()=>{
+          step++;
+          const prog=Math.min(step/steps,1);
+          a.volume=targetVol*(1-prog);
+          if(prog>=1){clearInterval(fo); a.volume=0;}
+        },FADE_STEP);
+      }
+    },100);
+  }
 }
 
 function onIntv(i,v){
@@ -534,6 +553,9 @@ buildPresets();
 buildSaveRow();
 buildTimerRow();
 updateNowPlaying();
+
+// 口笛風1にフェードアウトフラグを設定
+allTracks[tidx('sp',6)].fadeOut = true;
 </script>
 </body>
 </html>
