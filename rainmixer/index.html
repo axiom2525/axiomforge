@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>雨音ミキサー</title>
+<title>雨音工房</title>
 <style>
 *{box-sizing:border-box;margin:0;padding:0;}
 body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;background:#f0f2f5;min-height:100vh;padding:16px;}
@@ -11,68 +11,88 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;backgrou
 .app-header{padding:14px 20px;border-bottom:0.5px solid #dde1ea;display:flex;align-items:center;justify-content:space-between;}
 .app-title{font-size:17px;font-weight:500;color:#1a1d26;}
 .app-sub{font-size:12px;color:#9098aa;margin-top:1px;}
-.btn-reset{font-size:12px;padding:6px 14px;border:0.5px solid #b0b8c8;border-radius:8px;background:transparent;color:#6b7280;cursor:pointer;}
-.btn-reset:active{background:#eef0f5;}
-.layer{border-bottom:0.5px solid #dde1ea;}
-.layer-header{padding:10px 20px 8px;display:flex;align-items:center;gap:8px;}
-.layer-badge{font-size:11px;font-weight:500;padding:2px 8px;border-radius:100px;}
-.badge-base{background:#E1F5EE;color:#085041;}
-.badge-env{background:#E6F1FB;color:#0C447C;}
-.badge-sp{background:#FAEEDA;color:#633806;}
-.layer-title{font-size:13px;font-weight:500;color:#1a1d26;}
+.btn-play{font-size:13px;padding:7px 18px;border:0.5px solid #b0b8c8;border-radius:8px;background:#f5f6f8;color:#1a1d26;cursor:pointer;font-weight:500;}
+.btn-play.playing{background:#E1F5EE;color:#085041;border-color:#5DCAA5;}
+.section{border-bottom:0.5px solid #dde1ea;padding:10px 20px;}
+.section-label{font-size:11px;color:#9098aa;margin-bottom:8px;}
+.pill-row{display:flex;gap:6px;flex-wrap:wrap;}
+.pill{font-size:12px;padding:5px 12px;border:0.5px solid #b0b8c8;border-radius:100px;background:transparent;color:#6b7280;cursor:pointer;}
+.pill.active-blue{background:#E6F1FB;color:#0C447C;border-color:#85B7EB;}
+.pill.active-amber{background:#FAEEDA;color:#633806;border-color:#EF9F27;}
+.save-row{display:flex;gap:6px;}
+.save-slot{flex:1;font-size:12px;padding:6px 8px;border:0.5px solid #b0b8c8;border-radius:8px;background:transparent;color:#6b7280;cursor:pointer;text-align:center;line-height:1.5;}
+.save-slot.saved{background:#f5f6f8;color:#1a1d26;}
+.save-slot-sub{font-size:10px;color:#9098aa;display:block;}
+.tab-bar{display:flex;border-bottom:0.5px solid #dde1ea;}
+.tab{flex:1;padding:10px 0;text-align:center;font-size:13px;font-weight:500;color:#9098aa;cursor:pointer;border:none;border-bottom:2px solid transparent;background:transparent;}
+.tab.active{color:#1a1d26;border-bottom:2px solid #378ADD;}
+.tab-panel{display:none;}
+.tab-panel.active{display:block;}
 .track{padding:7px 20px;display:flex;align-items:center;gap:10px;border-top:0.5px solid #eef0f5;}
-.track-name{font-size:13px;color:#1a1d26;width:84px;flex-shrink:0;}
+.track-name{font-size:13px;color:#1a1d26;width:84px;flex-shrink:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
 .track-slider{flex:1;min-width:0;}
-.track-slider input[type=range]{width:100%;accent-color:#3b6ef5;}
+.track-slider input{width:100%;}
 .track-vol{font-size:12px;color:#9098aa;width:26px;text-align:right;flex-shrink:0;}
-.sp-col-header{font-size:10px;color:#9098aa;text-align:center;}
-.sp-check{display:flex;justify-content:center;flex-shrink:0;width:46px;}
-.sp-check input{width:15px;height:15px;accent-color:#3b6ef5;}
-.sp-select{font-size:11px;padding:3px 4px;border:0.5px solid #b0b8c8;border-radius:4px;background:#f5f6f8;color:#1a1d26;width:64px;flex-shrink:0;}
 .sp-header-row{display:grid;grid-template-columns:84px 1fr 26px 46px 64px;gap:10px;padding:5px 20px 3px;border-top:0.5px solid #dde1ea;align-items:center;}
 .sp-track-row{display:grid;grid-template-columns:84px 1fr 26px 46px 64px;gap:10px;padding:7px 20px;border-top:0.5px solid #eef0f5;align-items:center;}
+.sp-track-name{font-size:13px;color:#1a1d26;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.sp-col-header{font-size:10px;color:#9098aa;text-align:center;}
+.sp-select{font-size:11px;padding:3px 4px;border:0.5px solid #b0b8c8;border-radius:4px;background:#f5f6f8;color:#1a1d26;width:64px;}
+.now-section{padding:12px 20px;border-top:0.5px solid #dde1ea;}
+.now-label{font-size:11px;color:#9098aa;margin-bottom:8px;}
+.now-empty{font-size:12px;color:#b0b8c8;padding:4px 0;}
+.now-track{display:flex;align-items:center;gap:8px;padding:3px 0;}
+.now-badge{font-size:10px;font-weight:500;padding:1px 6px;border-radius:100px;flex-shrink:0;}
+.now-name{font-size:12px;color:#1a1d26;flex:1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.now-vol{font-size:12px;color:#9098aa;flex-shrink:0;width:28px;text-align:right;}
+.now-bar-wrap{width:60px;height:4px;background:#eef0f5;border-radius:2px;flex-shrink:0;}
+.now-bar{height:4px;border-radius:2px;background:#378ADD;}
 </style>
 </head>
 <body>
 <div class="app">
   <div class="app-header">
     <div>
-      <div class="app-title">雨音工房 <span style="font-size:12px;color:#9098aa;font-weight:400;">ver0.03</span></div>
+      <div class="app-title">雨音工房 <span style="font-size:12px;color:#9098aa;font-weight:400;">ver0.04</span></div>
       <div class="app-sub">～Ambient Rain～</div>
     </div>
-    <button class="btn-reset" onclick="resetAll()">リセット</button>
+    <button class="btn-play" id="playBtn" onclick="togglePlay()">▶ 再生</button>
   </div>
 
-  <!-- ベース音 -->
-  <div class="layer">
-    <div class="layer-header">
-      <span class="layer-badge badge-base">ベース音</span>
-      <span class="layer-title">降り方</span>
-    </div>
-    <div id="layer-base"></div>
+  <div class="section">
+    <div class="section-label">プリセット</div>
+    <div class="pill-row" id="presetRow"></div>
   </div>
 
-  <!-- 環境音 -->
-  <div class="layer">
-    <div class="layer-header">
-      <span class="layer-badge badge-env">環境音</span>
-      <span class="layer-title">場所・素材・生き物</span>
-    </div>
-    <div id="layer-env"></div>
+  <div class="section">
+    <div class="section-label">マイ設定</div>
+    <div class="save-row" id="saveRow"></div>
   </div>
 
-  <!-- 特殊 -->
-  <div class="layer">
-    <div class="layer-header">
-      <span class="layer-badge badge-sp">特殊</span>
-      <span class="layer-title">動き・イベント</span>
-    </div>
+  <div class="section">
+    <div class="section-label">おやすみタイマー</div>
+    <div class="pill-row" id="timerRow"></div>
+  </div>
+
+  <div class="tab-bar">
+    <button class="tab active" onclick="switchTab('base',this)">ベース音</button>
+    <button class="tab" onclick="switchTab('env',this)">環境音</button>
+    <button class="tab" onclick="switchTab('sp',this)">特殊</button>
+  </div>
+
+  <div id="tab-base" class="tab-panel active"></div>
+  <div id="tab-env" class="tab-panel"></div>
+  <div id="tab-sp" class="tab-panel">
     <div class="sp-header-row">
       <span></span><span></span><span></span>
       <span class="sp-col-header">揺らぎ</span>
       <span class="sp-col-header">インターバル</span>
     </div>
-    <div id="layer-sp"></div>
+  </div>
+
+  <div class="now-section">
+    <div class="now-label">現在の構成</div>
+    <div id="nowPlaying"><div class="now-empty">再生中の音はありません</div></div>
   </div>
 </div>
 
@@ -81,159 +101,307 @@ const BASE = '/rainmixer/';
 const FADE_SEC = 3.0, FADE_STEP = 50;
 const INTV_SEC = [0,10,20,30,60,90];
 const INTV_LBL = ['なし','10秒','20秒','30秒','60秒','90秒'];
+const TIMER_SEC = [0,15*60,30*60,60*60,90*60];
+const TIMER_LBL = ['なし','15分','30分','60分','90分'];
 
 const LAYERS = {
   base: [
-    {f:'Firefly_audio_light_rain_falling_softly,_gentle_raindrops,_natur_variation1.wav', n:'少雨 1'},
-    {f:'Firefly_audio_light_rain_falling_softly,_gentle_raindrops,_natur_variation2.wav', n:'少雨 2'},
-    {f:'Firefly_audio_light_rain_falling_softly,_gentle_raindrops,_natur_variation3.wav', n:'少雨 3'},
-    {f:'Firefly_audio_light_rain_falling_softly,_gentle_raindrops,_natur_variation4.wav', n:'少雨 4'},
-    {f:'Firefly_audio_heavy_rain,_dense_rainfall,_no_wind,_no_thunder,_i_variation2.wav', n:'強雨'},
-    {f:'Firefly_audio_heavy_rain,_dense_rainfall,_no_wind,_no_thunder,_i_variation4.wav', n:'豪雨'},
+    {f:'Firefly_audio_light_rain_falling_softly,_gentle_raindrops,_natur_variation1.wav',n:'少雨 1'},
+    {f:'Firefly_audio_light_rain_falling_softly,_gentle_raindrops,_natur_variation2.wav',n:'少雨 2'},
+    {f:'Firefly_audio_light_rain_falling_softly,_gentle_raindrops,_natur_variation3.wav',n:'少雨 3'},
+    {f:'Firefly_audio_light_rain_falling_softly,_gentle_raindrops,_natur_variation4.wav',n:'少雨 4'},
+    {f:'Firefly_audio_heavy_rain,_dense_rainfall,_no_wind,_no_thunder,_i_variation2.wav',n:'強雨'},
+    {f:'Firefly_audio_heavy_rain,_dense_rainfall,_no_wind,_no_thunder,_i_variation4.wav',n:'豪雨'},
   ],
   env: [
-    {f:'Firefly_audio_rain_hitting_asphalt_sound_variation1.wav', n:'アスファルト 1'},
-    {f:'Firefly_audio_rain_hitting_asphalt_sound_variation2.wav', n:'アスファルト 2'},
-    {f:'Firefly_audio_rain_hitting_metal_roof_sound_variation1.wav', n:'金属屋根 1'},
-    {f:'Firefly_audio_rain_hitting_metal_roof_sound_variation2.wav', n:'金属屋根 2'},
-    {f:'Firefly_audio_rain_hitting_puddles_sound_variation1.wav', n:'水たまり 1'},
-    {f:'Firefly_audio_rain_hitting_puddles_sound_variation2.wav', n:'水たまり 2'},
-    {f:'Firefly_audio_rain_hitting_puddles_sound_variation3.wav', n:'水たまり 3'},
-    {f:'Firefly_audio_rain_hitting_tent_fabric_sound_variation1.wav', n:'テント 1'},
-    {f:'Firefly_audio_rain_hitting_tent_fabric_sound_variation3.wav', n:'テント 2'},
-    {f:'Firefly_audio_isolated_frog_croaking,_distant,_minimal_ambient_n_variation1.wav', n:'カエル 1'},
-    {f:'Firefly_audio_isolated_frog_croaking,_distant,_minimal_ambient_n_variation2.wav', n:'カエル 2'},
+    {f:'Firefly_audio_rain_hitting_asphalt_sound_variation1.wav',n:'アスファルト 1'},
+    {f:'Firefly_audio_rain_hitting_asphalt_sound_variation2.wav',n:'アスファルト 2'},
+    {f:'Firefly_audio_rain_hitting_metal_roof_sound_variation1.wav',n:'金属屋根 1'},
+    {f:'Firefly_audio_rain_hitting_metal_roof_sound_variation2.wav',n:'金属屋根 2'},
+    {f:'Firefly_audio_rain_hitting_puddles_sound_variation1.wav',n:'水たまり 1'},
+    {f:'Firefly_audio_rain_hitting_puddles_sound_variation2.wav',n:'水たまり 2'},
+    {f:'Firefly_audio_rain_hitting_puddles_sound_variation3.wav',n:'水たまり 3'},
+    {f:'Firefly_audio_rain_hitting_tent_fabric_sound_variation1.wav',n:'テント 1'},
+    {f:'Firefly_audio_rain_hitting_tent_fabric_sound_variation3.wav',n:'テント 2'},
+    {f:'Firefly_audio_isolated_frog_croaking,_distant,_minimal_ambient_n_variation1.wav',n:'カエル 1'},
+    {f:'Firefly_audio_isolated_frog_croaking,_distant,_minimal_ambient_n_variation2.wav',n:'カエル 2'},
   ],
   sp: [
-    {f:'Firefly_audio_sound_of_thunder_variation1.wav', n:'遠雷 1'},
-    {f:'Firefly_audio_sound_of_thunder_variation2.wav', n:'遠雷 2'},
-    {f:'Firefly_audio_thunderclap_variation1.wav', n:'雷鳴 1'},
-    {f:'Firefly_audio_thunderclap_variation2.wav', n:'雷鳴 2'},
-    {f:'Firefly_audio_thunderclap_variation3.wav', n:'雷鳴 3'},
-    {f:'Firefly_audio_gusty_wind_sound_variation1.wav', n:'突風'},
-    {f:'Firefly_audio_whistling_wind_sound_variation1.wav', n:'口笛風 1'},
-    {f:'Firefly_audio_whistling_wind_sound_variation4.wav', n:'口笛風 2'},
+    {f:'Firefly_audio_sound_of_thunder_variation1.wav',n:'遠雷 1'},
+    {f:'Firefly_audio_sound_of_thunder_variation2.wav',n:'遠雷 2'},
+    {f:'Firefly_audio_thunderclap_variation1.wav',n:'雷鳴 1'},
+    {f:'Firefly_audio_thunderclap_variation2.wav',n:'雷鳴 2'},
+    {f:'Firefly_audio_thunderclap_variation3.wav',n:'雷鳴 3'},
+    {f:'Firefly_audio_gusty_wind_sound_variation1.wav',n:'突風'},
+    {f:'Firefly_audio_whistling_wind_sound_variation1.wav',n:'口笛風 1'},
+    {f:'Firefly_audio_whistling_wind_sound_variation4.wav',n:'口笛風 2'},
   ]
 };
 
-// MediaSession設定（ロック画面・通知センター表示）
-if ('mediaSession' in navigator) {
-  navigator.mediaSession.metadata = new MediaMetadata({
-    title: '雨音工房',
-    artist: 'Ambient Rain',
-    album: 'axiomforge',
-  });
-}
+// プリセット定義
+const PRESETS = [
+  {name:'深夜の雨', vals:{
+    base:[60,0,40,0,0,0],
+    env:[30,0,0,0,20,0,0,0,0,15,0],
+    sp:[0,0,0,0,0,0,0,0]
+  }},
+  {name:'夕立', vals:{
+    base:[0,0,20,0,70,0],
+    env:[50,0,40,0,30,0,0,0,0,0,0],
+    sp:[50,0,0,0,0,30,0,0]
+  }},
+  {name:'テント', vals:{
+    base:[40,0,60,0,0,0],
+    env:[0,0,0,0,0,0,0,70,0,0,0],
+    sp:[0,0,0,0,0,0,0,0]
+  }},
+  {name:'嵐の前', vals:{
+    base:[0,0,0,0,50,30],
+    env:[60,0,50,0,40,0,0,0,0,0,0],
+    sp:[40,0,30,0,0,50,30,0]
+  }},
+];
 
-// 全トラックをフラットに持つ
+const BADGE_INFO = {
+  base:{label:'ベース',bg:'#E1F5EE',color:'#085041'},
+  env:{label:'環境',bg:'#E6F1FB',color:'#0C447C'},
+  sp:{label:'特殊',bg:'#FAEEDA',color:'#633806'},
+};
+
+// 全トラック
 const allTracks = [];
 ['base','env','sp'].forEach(layer => {
-  LAYERS[layer].forEach((item, li) => {
+  LAYERS[layer].forEach(item => {
     const url = BASE + encodeURIComponent(item.f);
     const a = new Audio(url), b = new Audio(url);
     a.preload = b.preload = 'auto';
-    allTracks.push({
-      layer, file:item.f, name:item.name||item.n,
-      a, b, active:'a', vol:0, intv:0,
-      fading:false, fadeTimer:null, intvTimer:null,
-      shake:false, shakeTimer:null
-    });
+    allTracks.push({layer,n:item.n,a,b,active:'a',vol:0,intv:0,fading:false,fadeTimer:null,intvTimer:null,shake:false,shakeTimer:null});
   });
 });
 
-// インデックス逆引き
-function tidx(layer, li) {
-  let base = 0;
-  if(layer==='env') base = LAYERS.base.length;
-  else if(layer==='sp') base = LAYERS.base.length + LAYERS.env.length;
-  return base + li;
+function tidx(layer,li){
+  let base=0;
+  if(layer==='env') base=LAYERS.base.length;
+  else if(layer==='sp') base=LAYERS.base.length+LAYERS.env.length;
+  return base+li;
 }
 
-function buildLayer(layer, containerId, isSp) {
-  const c = document.getElementById(containerId);
-  LAYERS[layer].forEach((item, li) => {
-    const i = tidx(layer, li);
-    const row = document.createElement('div');
-    if(isSp){
-      row.className = 'sp-track-row';
-      row.innerHTML = `
-        <span style="font-size:13px;color:#1a1d26;">${item.n}</span>
-        <input type="range" min="0" max="100" value="0" id="s${i}" style="width:100%;accent-color:#f59e0b;" oninput="onVol(${i},+this.value)">
-        <span id="n${i}" style="font-size:12px;color:#9098aa;text-align:right;">0</span>
-        <div style="display:flex;justify-content:center;">
-          <input type="checkbox" id="sh${i}" style="width:15px;height:15px;accent-color:#f59e0b;" onchange="onShake(${i},this.checked)">
-        </div>
-        <select id="intv${i}" style="font-size:11px;padding:3px 4px;border:0.5px solid #b0b8c8;border-radius:4px;background:#f5f6f8;color:#1a1d26;width:64px;" onchange="onIntv(${i},+this.value)">
-          ${INTV_LBL.map((l,v)=>`<option value="${v}">${l}</option>`).join('')}
-        </select>`;
-    } else {
-      row.className = 'track';
-      row.innerHTML = `
-        <span class="track-name">${item.n}</span>
-        <div class="track-slider"><input type="range" min="0" max="100" value="0" id="s${i}" oninput="onVol(${i},+this.value)"></div>
-        <span class="track-vol" id="n${i}">0</span>`;
-    }
-    c.appendChild(row);
+// UI構築
+function buildLayers(){
+  LAYERS.base.forEach((item,li)=>{
+    const i=tidx('base',li);
+    const row=document.createElement('div');
+    row.className='track';
+    row.innerHTML=`<span class="track-name">${item.n}</span><div class="track-slider"><input type="range" min="0" max="100" value="0" id="s${i}" accent-color="#1D9E75" oninput="onVol(${i},+this.value)"></div><span class="track-vol" id="n${i}">0</span>`;
+    document.getElementById('tab-base').appendChild(row);
+  });
+  LAYERS.env.forEach((item,li)=>{
+    const i=tidx('env',li);
+    const row=document.createElement('div');
+    row.className='track';
+    row.innerHTML=`<span class="track-name">${item.n}</span><div class="track-slider"><input type="range" min="0" max="100" value="0" id="s${i}" oninput="onVol(${i},+this.value)"></div><span class="track-vol" id="n${i}">0</span>`;
+    document.getElementById('tab-env').appendChild(row);
+  });
+  LAYERS.sp.forEach((item,li)=>{
+    const i=tidx('sp',li);
+    const row=document.createElement('div');
+    row.className='sp-track-row';
+    row.innerHTML=`
+      <span class="sp-track-name">${item.n}</span>
+      <input type="range" min="0" max="100" value="0" id="s${i}" style="width:100%;accent-color:#f59e0b;" oninput="onVol(${i},+this.value)">
+      <span id="n${i}" style="font-size:12px;color:#9098aa;text-align:right;">0</span>
+      <div style="display:flex;justify-content:center;"><input type="checkbox" id="sh${i}" style="width:15px;height:15px;accent-color:#f59e0b;" onchange="onShake(${i},this.checked)"></div>
+      <select class="sp-select" id="intv${i}" onchange="onIntv(${i},+this.value)">
+        ${INTV_LBL.map((l,v)=>`<option value="${v}">${l}</option>`).join('')}
+      </select>`;
+    document.getElementById('tab-sp').appendChild(row);
   });
 }
 
-buildLayer('base','layer-base',false);
-buildLayer('env','layer-env',false);
-buildLayer('sp','layer-sp',true);
+// プリセットUI
+let activePreset=-1;
+function buildPresets(){
+  const row=document.getElementById('presetRow');
+  PRESETS.forEach((p,pi)=>{
+    const btn=document.createElement('button');
+    btn.className='pill'; btn.textContent=p.name; btn.id='preset'+pi;
+    btn.onclick=()=>applyPreset(pi);
+    row.appendChild(btn);
+  });
+}
+
+function applyPreset(pi){
+  const p=PRESETS[pi];
+  activePreset=pi;
+  document.querySelectorAll('[id^=preset]').forEach(b=>b.classList.remove('active-blue'));
+  document.getElementById('preset'+pi).classList.add('active-blue');
+  ['base','env','sp'].forEach(layer=>{
+    p.vals[layer].forEach((v,li)=>{
+      const i=tidx(layer,li);
+      document.getElementById('s'+i).value=v;
+      onVol(i,v);
+    });
+  });
+  if(!isPlaying) togglePlay();
+}
+
+// マイ設定UI
+const MY_KEY='rainmixer_my';
+function loadMySlots(){return JSON.parse(localStorage.getItem(MY_KEY)||'[null,null,null]');}
+function saveMySlots(slots){localStorage.setItem(MY_KEY,JSON.stringify(slots));}
+
+function buildSaveRow(){
+  const row=document.getElementById('saveRow');
+  row.innerHTML='';
+  const slots=loadMySlots();
+  slots.forEach((s,si)=>{
+    const btn=document.createElement('button');
+    btn.className='save-slot'+(s?'  saved':'');
+    btn.innerHTML=`MY ${si+1}<span class="save-slot-sub">${s?'読込 / 保存':'空き'}</span>`;
+    btn.onclick=()=>onSaveSlot(si);
+    row.appendChild(btn);
+  });
+}
+
+function onSaveSlot(si){
+  const slots=loadMySlots();
+  if(slots[si]){
+    // 読み込み
+    const saved=slots[si];
+    allTracks.forEach((t,i)=>{
+      document.getElementById('s'+i).value=saved.vols[i]||0;
+      onVol(i,saved.vols[i]||0);
+    });
+    // 長押し想定で今は1タップで読込。保存は別ボタン検討余地あり
+  } else {
+    // 保存
+    const vols=allTracks.map((t,i)=>t.vol);
+    slots[si]={vols};
+    saveMySlots(slots);
+    buildSaveRow();
+  }
+}
+
+// タイマーUI
+let timerIdx=0, timerRemain=0, timerInterval=null;
+function buildTimerRow(){
+  const row=document.getElementById('timerRow');
+  TIMER_LBL.forEach((l,ti)=>{
+    const btn=document.createElement('button');
+    btn.className='pill'; btn.textContent=l; btn.id='timer'+ti;
+    btn.onclick=()=>setTimer(ti);
+    row.appendChild(btn);
+  });
+  const span=document.createElement('span');
+  span.id='timerCount'; span.style.cssText='font-size:12px;color:#9098aa;margin-left:4px;';
+  row.appendChild(span);
+}
+
+function setTimer(ti){
+  document.querySelectorAll('[id^=timer]').forEach(b=>b.classList.remove('active-amber'));
+  document.getElementById('timer'+ti).classList.add('active-amber');
+  if(timerInterval){clearInterval(timerInterval);timerInterval=null;}
+  timerIdx=ti; timerRemain=TIMER_SEC[ti];
+  document.getElementById('timerCount').textContent='';
+  if(ti===0) return;
+  timerInterval=setInterval(()=>{
+    timerRemain--;
+    const m=Math.floor(timerRemain/60), s=timerRemain%60;
+    document.getElementById('timerCount').textContent=`残り ${m}:${String(s).padStart(2,'0')}`;
+    if(timerRemain<=0){
+      clearInterval(timerInterval); timerInterval=null;
+      stopAllAudio(); isPlaying=false; updatePlayBtn();
+      document.getElementById('timerCount').textContent='';
+      document.getElementById('timer0').click();
+    }
+  },1000);
+}
+
+// 再生停止
+let isPlaying=false;
+function togglePlay(){
+  isPlaying=!isPlaying;
+  if(isPlaying){
+    allTracks.forEach((t,i)=>{
+      if(t.vol>=1){
+        const cur=t.active==='a'?t.a:t.b;
+        cur.volume=t.vol/100;
+        if(cur.paused){cur.currentTime=0;cur.play().catch(()=>{});}
+      }
+    });
+  } else {
+    stopAllAudio();
+  }
+  updatePlayBtn();
+}
+
+function stopAllAudio(){
+  allTracks.forEach(t=>{
+    if(t.fadeTimer){clearInterval(t.fadeTimer);t.fadeTimer=null;}
+    t.fading=false;
+    t.a.pause(); t.b.pause();
+  });
+}
+
+function updatePlayBtn(){
+  const btn=document.getElementById('playBtn');
+  if(isPlaying){btn.textContent='■ 停止';btn.classList.add('playing');}
+  else{btn.textContent='▶ 再生';btn.classList.remove('playing');}
+}
 
 // クロスフェード監視
-setInterval(() => {
-  allTracks.forEach((t,i) => {
+setInterval(()=>{
+  if(!isPlaying) return;
+  allTracks.forEach((t,i)=>{
     if(t.vol===0||t.fading||t.intv>0) return;
-    const which = t.active;
-    const cur = which==='a'?t.a:t.b;
-    const nxt = which==='a'?t.b:t.a;
+    const which=t.active;
+    const cur=which==='a'?t.a:t.b;
+    const nxt=which==='a'?t.b:t.a;
     if(!cur.duration||cur.duration===Infinity) return;
-    const rem = cur.duration - cur.currentTime;
+    const rem=cur.duration-cur.currentTime;
     if(rem>FADE_SEC||rem<=0) return;
     t.fading=true;
-    nxt.currentTime=0; nxt.volume=0;
-    nxt.play().catch(()=>{});
-    const targetVol = t.vol/100;
-    const steps = Math.ceil(rem*1000/FADE_STEP);
-    let step=0;
-    t.fadeTimer = setInterval(()=>{
+    nxt.currentTime=0; nxt.volume=0; nxt.play().catch(()=>{});
+    const tv=t.vol/100;
+    const steps=Math.ceil(rem*1000/FADE_STEP); let step=0;
+    t.fadeTimer=setInterval(()=>{
       step++;
       const prog=Math.min(step/steps,1);
       const angle=prog*Math.PI/2;
-      cur.volume=targetVol*Math.cos(angle);
-      nxt.volume=targetVol*Math.sin(angle);
+      cur.volume=tv*Math.cos(angle); nxt.volume=tv*Math.sin(angle);
       if(prog>=1){
         clearInterval(t.fadeTimer);
-        cur.pause(); cur.currentTime=0; cur.volume=0;
-        t.active=which==='a'?'b':'a';
-        t.fading=false;
+        cur.pause();cur.currentTime=0;cur.volume=0;
+        t.active=which==='a'?'b':'a'; t.fading=false;
       }
     },FADE_STEP);
   });
 },100);
 
 function onVol(i,v){
-  const t=allTracks[i];
-  t.vol=v;
+  const t=allTracks[i]; t.vol=v;
   document.getElementById('n'+i).textContent=v;
-  // ボリューム変更でインターバルリセット
   if(t.intv!==0){
     t.intv=0;
     if(t.intvTimer){clearTimeout(t.intvTimer);t.intvTimer=null;}
-    document.getElementById('intv'+i).value=0;
+    const intvEl=document.getElementById('intv'+i);
+    if(intvEl) intvEl.value=0;
   }
   const cur=t.active==='a'?t.a:t.b;
-  if(v>=1){
+  if(v>=1&&isPlaying){
     cur.volume=v/100;
     if(cur.paused){cur.currentTime=0;cur.play().catch(()=>{});}
-  } else {
+  } else if(v===0){
     if(t.fadeTimer){clearInterval(t.fadeTimer);t.fadeTimer=null;}
     t.fading=false;
     t.a.pause();t.a.currentTime=0;t.a.volume=0;
     t.b.pause();t.b.currentTime=0;t.b.volume=0;
     t.active='a';
   }
+  // スライダー操作でプリセット選択解除
+  activePreset=-1;
+  document.querySelectorAll('[id^=preset]').forEach(b=>b.classList.remove('active-blue'));
+  updateNowPlaying();
 }
 
 function onEnded(i){
@@ -245,37 +413,30 @@ function onEnded(i){
 function stopLoop(i){
   const t=allTracks[i];
   if(t.fadeTimer){clearInterval(t.fadeTimer);t.fadeTimer=null;}
-  t.fading=false;
-  t.b.pause();t.b.currentTime=0;t.b.volume=0;
-  t.active='a';
+  t.fading=false; t.b.pause();t.b.currentTime=0;t.b.volume=0; t.active='a';
 }
 
 function playOnce(i){
   const t=allTracks[i];
   if(t.intv===0) return;
   stopLoop(i);
-  const a=t.a;
-  a.currentTime=0; a.volume=t.vol/100;
-  a.play().catch(()=>{});
+  const a=t.a; a.currentTime=0; a.volume=t.vol/100; a.play().catch(()=>{});
 }
 
 function onIntv(i,v){
-  const t=allTracks[i];
-  t.intv=v;
+  const t=allTracks[i]; t.intv=v;
   if(t.intvTimer){clearTimeout(t.intvTimer);t.intvTimer=null;}
   if(v===0){
     const cur=t.active==='a'?t.a:t.b;
     cur.volume=t.vol/100;
-    if(t.vol>=1&&cur.paused){cur.currentTime=0;cur.play().catch(()=>{});}
+    if(t.vol>=1&&isPlaying&&cur.paused){cur.currentTime=0;cur.play().catch(()=>{});}
     return;
   }
   playOnce(i);
 }
 
-// 揺らぎ（音量を小刻みにランダムで変動）
 function onShake(i,on){
-  const t=allTracks[i];
-  t.shake=on;
+  const t=allTracks[i]; t.shake=on;
   if(t.shakeTimer){clearInterval(t.shakeTimer);t.shakeTimer=null;}
   if(!on) return;
   t.shakeTimer=setInterval(()=>{
@@ -287,29 +448,47 @@ function onShake(i,on){
   },300);
 }
 
-// ended イベント登録
 allTracks.forEach((t,i)=>{
   t.a.addEventListener('ended',()=>onEnded(i));
   t.b.addEventListener('ended',()=>onEnded(i));
 });
 
-function resetAll(){
-  allTracks.forEach((t,i)=>{
-    t.vol=0;
-    if(t.fadeTimer){clearInterval(t.fadeTimer);t.fadeTimer=null;}
-    if(t.intvTimer){clearTimeout(t.intvTimer);t.intvTimer=null;}
-    if(t.shakeTimer){clearInterval(t.shakeTimer);t.shakeTimer=null;}
-    t.fading=false; t.intv=0; t.shake=false; t.active='a';
-    t.a.pause();t.a.currentTime=0;t.a.volume=0;
-    t.b.pause();t.b.currentTime=0;t.b.volume=0;
-    document.getElementById('s'+i).value=0;
-    document.getElementById('n'+i).textContent=0;
-    const intvEl=document.getElementById('intv'+i);
-    if(intvEl) intvEl.value=0;
-    const shEl=document.getElementById('sh'+i);
-    if(shEl) shEl.checked=false;
-  });
+// 現在の構成表示
+function updateNowPlaying(){
+  const el=document.getElementById('nowPlaying');
+  const active=allTracks.map((t,i)=>({t,i})).filter(({t})=>t.vol>0);
+  if(active.length===0){
+    el.innerHTML='<div class="now-empty">再生中の音はありません</div>';
+    return;
+  }
+  el.innerHTML=active.map(({t,i})=>{
+    const b=BADGE_INFO[t.layer];
+    const pct=t.vol;
+    return `<div class="now-track">
+      <span class="now-badge" style="background:${b.bg};color:${b.color};">${b.label}</span>
+      <span class="now-name">${t.n}</span>
+      <div class="now-bar-wrap"><div class="now-bar" style="width:${pct}%"></div></div>
+      <span class="now-vol">${pct}</span>
+    </div>`;
+  }).join('');
 }
+
+function switchTab(id,el){
+  document.querySelectorAll('.tab-panel').forEach(p=>p.classList.remove('active'));
+  document.querySelectorAll('.tab').forEach(t=>t.classList.remove('active'));
+  document.getElementById('tab-'+id).classList.add('active');
+  el.classList.add('active');
+}
+
+if('mediaSession' in navigator){
+  navigator.mediaSession.metadata=new MediaMetadata({title:'雨音工房',artist:'Ambient Rain',album:'axiomforge'});
+}
+
+buildLayers();
+buildPresets();
+buildSaveRow();
+buildTimerRow();
+updateNowPlaying();
 </script>
 </body>
 </html>
