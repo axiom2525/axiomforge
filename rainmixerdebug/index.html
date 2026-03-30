@@ -30,7 +30,7 @@ select { background:#222; color:#aaa; border:1px solid #444; padding:3px 2px; fo
 </style>
 </head>
 <body>
-<h1>🌧 雨音ミキサー デバッグ ver0.02</h1>
+<h1>🌧 雨音ミキサー デバッグ ver0.03</h1>
 <div class="grid-header">
   <div>ファイル / 説明</div>
   <div style="text-align:center">レベル</div>
@@ -122,28 +122,34 @@ function build() {
 // インターバル再生が終わったら待機→再生サイクル
 function onEnded(i) {
   const t = tracks[i];
-  if (t.vol > 0) return; // 通常再生中は無視
   if (t.intv === 0) return;
-  const sec = INTV_SEC[t.intv];
-  t.intvTimer = setTimeout(() => playOnce(i), sec * 1000);
+  t.intvTimer = setTimeout(() => playOnce(i), INTV_SEC[t.intv] * 1000);
 }
 
-// インターバル1回再生
+// インターバル1回再生（ループなし、vol値で再生）
 function playOnce(i) {
   const t = tracks[i];
-  if (t.vol > 0) return; // 通常再生中はスキップ
+  if (t.intv === 0) return;
+  // ループ停止
+  stopLoop(i);
   const a = t.a;
   a.currentTime = 0;
-  a.volume = t.vol > 0 ? t.vol / 100 : Math.max(parseFloat(document.getElementById('s'+i).value) / 100, 0.01);
-  // スライダーが0でもインターバルは動く場合、スライダー値を使う（0なら0.6デフォルト）
-  const sliderVal = parseFloat(document.getElementById('s'+i).value);
-  a.volume = sliderVal > 0 ? sliderVal / 100 : 0.6;
+  a.volume = t.vol / 100;
   a.play().catch(()=>{});
+}
+
+// ループ停止（クロスフェード中断）
+function stopLoop(i) {
+  const t = tracks[i];
+  if (t.fadeTimer) { clearInterval(t.fadeTimer); t.fadeTimer = null; }
+  t.fading = false;
+  t.b.pause(); t.b.currentTime = 0; t.b.volume = 0;
+  t.active = 'a';
 }
 
 function checkXfade(i, which) {
   const t = tracks[i];
-  if (t.vol === 0 || t.fading) return;
+  if (t.vol === 0 || t.fading || t.intv > 0) return;
   if (t.active !== which) return;
   const cur = which==='a' ? t.a : t.b;
   const nxt = which==='a' ? t.b : t.a;
@@ -207,8 +213,14 @@ function setIntv(i, v) {
   const t = tracks[i];
   t.intv = v;
   if (t.intvTimer) { clearTimeout(t.intvTimer); t.intvTimer = null; }
-  if (v === 0) return;
-  // 設定直後に1回すぐ再生開始
+  if (v === 0) {
+    // インターバルなし → ループ再開
+    const cur = t.active==='a' ? t.a : t.b;
+    cur.volume = t.vol / 100;
+    if (t.vol >= 1 && cur.paused) { cur.currentTime=0; cur.play().catch(()=>{}); }
+    return;
+  }
+  // インターバル設定 → ループ止めて今すぐ1回再生
   playOnce(i);
 }
 
