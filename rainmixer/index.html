@@ -58,7 +58,7 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;backgrou
 <div class="app">
   <div class="app-header">
     <div>
-      <div class="app-title">雨音工房 <span style="font-size:12px;color:#9098aa;font-weight:400;">ver0.07</span></div>
+      <div class="app-title">雨音工房 <span style="font-size:12px;color:#9098aa;font-weight:400;">ver0.08</span></div>
       <div class="app-sub">～Ambient Rain～</div>
     </div>
     <button class="btn-play" id="playBtn" onclick="togglePlay()">▶ 再生</button>
@@ -469,36 +469,50 @@ function playOnce(i){
   a.currentTime=0;
 
   if(t.fadeOut){
-    // フェードイン
-    a.volume=0;
-    a.play().catch(()=>{});
     const targetVol=t.vol/100;
-    const FI_STEPS=20, FI_STEP_MS=50;
-    let fiStep=0;
-    const fiTimer=setInterval(()=>{
-      fiStep++;
-      a.volume=Math.min(targetVol*(fiStep/FI_STEPS),targetVol);
-      if(fiStep>=FI_STEPS) clearInterval(fiTimer);
-    },FI_STEP_MS);
+    const FO_DUR=2.5;
 
-    // フェードアウト：100msごとに残り時間を監視
-    const FO_DUR=2.0;
-    let foStarted=false;
-    const foCheck=setInterval(()=>{
-      if(a.paused||!a.duration||a.duration===Infinity) return;
-      const rem=a.duration-a.currentTime;
-      if(rem<=FO_DUR&&!foStarted){
-        foStarted=true;
-        clearInterval(foCheck);
-        const steps=Math.ceil(rem*1000/FADE_STEP); let step=0;
-        const foTimer=setInterval(()=>{
-          step++;
-          const prog=Math.min(step/steps,1);
-          a.volume=targetVol*(1-prog);
-          if(prog>=1){clearInterval(foTimer); a.volume=0;}
-        },FADE_STEP);
-      }
-    },100);
+    function startPlayWithFade(){
+      // フェードイン
+      a.volume=0;
+      a.play().catch(()=>{});
+      const FI_STEPS=20;
+      let fiStep=0;
+      const fiTimer=setInterval(()=>{
+        fiStep++;
+        a.volume=Math.min(targetVol*(fiStep/FI_STEPS),targetVol);
+        if(fiStep>=FI_STEPS) clearInterval(fiTimer);
+      },50);
+
+      // フェードアウト監視
+      let foStarted=false;
+      const foCheck=setInterval(()=>{
+        if(a.paused) return;
+        const dur=a.duration;
+        if(!dur||dur===Infinity||dur<=0) return;
+        const rem=dur-a.currentTime;
+        if(rem<=FO_DUR&&!foStarted){
+          foStarted=true;
+          clearInterval(foCheck);
+          const steps=Math.ceil(rem*1000/FADE_STEP);
+          let step=0;
+          const foTimer=setInterval(()=>{
+            step++;
+            const prog=Math.min(step/steps,1);
+            a.volume=targetVol*(1-prog);
+            if(prog>=1){clearInterval(foTimer); a.volume=0;}
+          },FADE_STEP);
+        }
+      },100);
+    }
+
+    // durationが既に取れてれば即開始、取れてなければloadedmetadata待ち
+    if(a.duration&&a.duration!==Infinity&&a.duration>0){
+      startPlayWithFade();
+    } else {
+      a.addEventListener('loadedmetadata', startPlayWithFade, {once:true});
+      a.load();
+    }
   } else {
     a.volume=t.vol/100;
     a.play().catch(()=>{});
