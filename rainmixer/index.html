@@ -58,7 +58,7 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;backgrou
 <div class="app">
   <div class="app-header">
     <div>
-      <div class="app-title">雨音工房 <span style="font-size:12px;color:#9098aa;font-weight:400;">ver0.12</span></div>
+      <div class="app-title">雨音工房 <span style="font-size:12px;color:#9098aa;font-weight:400;">ver0.13</span></div>
       <div class="app-sub">～Ambient Rain～</div>
     </div>
     <button class="btn-play" id="playBtn" onclick="togglePlay()">▶ 再生</button>
@@ -483,24 +483,37 @@ function playOnce(i){
       if(fiStep>=20) clearInterval(fiTimer);
     },50);
 
-    // 16秒後にフェードアウト開始
-    setTimeout(()=>{
-      if(t.intv===0){a.loop=false;return;}
-      const steps=Math.ceil(2.5*1000/FADE_STEP); let step=0;
-      const foTimer=setInterval(()=>{
-        step++;
-        const prog=Math.min(step/steps,1);
-        a.volume=targetVol*(1-prog);
-        if(prog>=1){
-          clearInterval(foTimer);
-          a.volume=0; a.pause(); a.loop=false;
-          // インターバル待機開始
-          if(t.intv>0){
-            t.intvTimer=setTimeout(()=>playOnce(i), INTV_SEC[t.intv]*1000);
+    // ループ数カウント＋2周目5秒でフェードアウト
+    let loopCount=0;
+    let foStarted=false;
+    let foTimer=null;
+
+    const onLoop=()=>{ loopCount++; };
+    a.addEventListener('ended', onLoop);
+
+    const watchTimer=setInterval(()=>{
+      if(foStarted) return;
+      // 1周目完了後、2周目のcurrentTimeを監視
+      if(loopCount>=1 && a.currentTime>=5.0){
+        foStarted=true;
+        clearInterval(watchTimer);
+        a.removeEventListener('ended', onLoop);
+        // フェードアウト2.5秒
+        const steps=Math.ceil(2500/FADE_STEP); let step=0;
+        foTimer=setInterval(()=>{
+          step++;
+          const prog=Math.min(step/steps,1);
+          a.volume=targetVol*(1-prog);
+          if(prog>=1){
+            clearInterval(foTimer);
+            a.volume=0; a.pause(); a.loop=false;
+            if(t.intv>0){
+              t.intvTimer=setTimeout(()=>playOnce(i), INTV_SEC[t.intv]*1000);
+            }
           }
-        }
-      },FADE_STEP);
-    },16000);
+        },FADE_STEP);
+      }
+    },100);
 
   } else {
     a.volume=t.vol/100;
