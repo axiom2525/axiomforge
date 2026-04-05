@@ -1,0 +1,310 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <title>使い方ガイド | AxiomForge</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <style>
+    :root {
+      --bg: #eef3f8;
+      --surface: #ffffff;
+      --surface-soft: #f8fbff;
+      --text: #16202a;
+      --muted: #5f6f82;
+      --border: #d7e2ee;
+      --accent: #2563eb;
+      --accent-soft: #dbeafe;
+      --shadow: 0 12px 30px rgba(20, 40, 80, 0.08);
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      font-family: sans-serif;
+      background:
+        radial-gradient(circle at top left, rgba(37, 99, 235, 0.10), transparent 30%),
+        linear-gradient(180deg, #f7fbff 0%, var(--bg) 100%);
+      color: var(--text);
+      line-height: 1.7;
+    }
+
+    .shell {
+      max-width: 920px;
+      margin: 0 auto;
+      padding: 24px 16px 72px;
+    }
+
+    .hero {
+      background: linear-gradient(135deg, #1d4ed8 0%, #2563eb 55%, #3b82f6 100%);
+      color: white;
+      border-radius: 24px;
+      padding: 28px 24px;
+      box-shadow: var(--shadow);
+      margin-bottom: 20px;
+    }
+
+    .hero-top {
+      display: flex;
+      justify-content: space-between;
+      gap: 12px;
+      align-items: center;
+      margin-bottom: 16px;
+      flex-wrap: wrap;
+    }
+
+    .back-link {
+      display: inline-block;
+      color: white;
+      text-decoration: none;
+      border: 1px solid rgba(255,255,255,0.45);
+      border-radius: 999px;
+      padding: 8px 14px;
+      font-size: 13px;
+      background: rgba(255,255,255,0.08);
+    }
+
+    .eyebrow {
+      font-size: 12px;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      opacity: 0.8;
+      margin: 0 0 10px;
+    }
+
+    h1 {
+      margin: 0 0 10px;
+      font-size: 34px;
+      line-height: 1.15;
+    }
+
+    .hero p {
+      margin: 0;
+      max-width: 680px;
+      font-size: 16px;
+      opacity: 0.95;
+    }
+
+    .grid {
+      display: grid;
+      gap: 18px;
+    }
+
+    .card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 22px;
+      padding: 22px 20px;
+      box-shadow: var(--shadow);
+    }
+
+    .card.intro {
+      background: linear-gradient(180deg, var(--surface) 0%, var(--surface-soft) 100%);
+    }
+
+    h2 {
+      margin: 0 0 14px;
+      font-size: 24px;
+    }
+
+    h3 {
+      margin: 18px 0 8px;
+      font-size: 15px;
+      color: var(--accent);
+    }
+
+    p {
+      margin: 0 0 10px;
+    }
+
+    ul,
+    ol {
+      margin: 0;
+      padding-left: 20px;
+    }
+
+    li + li {
+      margin-top: 4px;
+    }
+
+    .section-head {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      gap: 12px;
+      flex-wrap: wrap;
+      margin-bottom: 6px;
+    }
+
+    .badge {
+      display: inline-block;
+      background: var(--accent-soft);
+      color: var(--accent);
+      border-radius: 999px;
+      padding: 6px 12px;
+      font-size: 12px;
+      font-weight: 700;
+      white-space: nowrap;
+    }
+
+    .summary {
+      color: var(--muted);
+      margin-bottom: 10px;
+    }
+
+    .tips {
+      background: #f8fafc;
+      border: 1px dashed #bfd3ea;
+      border-radius: 16px;
+      padding: 14px 16px;
+      margin-top: 14px;
+    }
+
+    .footer-note {
+      margin-top: 18px;
+      text-align: center;
+      color: var(--muted);
+      font-size: 13px;
+    }
+
+    @media (max-width: 640px) {
+      .hero {
+        padding: 22px 18px;
+      }
+
+      h1 {
+        font-size: 28px;
+      }
+
+      .card {
+        padding: 18px 16px;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="shell">
+    <section class="hero">
+      <div class="hero-top">
+        <a class="back-link" href="/">← TOPに戻る</a>
+        <span class="badge">AxiomForge Guide</span>
+      </div>
+      <p class="eyebrow">How To Use</p>
+      <h1>使い方ガイド</h1>
+      <p>「まずは試してみたい」人向けに、AxiomForgeの各ツールがどんなときに便利か、どう使うかをまとめました。</p>
+    </section>
+
+    <div class="grid">
+      <section class="card intro">
+        <div class="section-head">
+          <h2>① 導入（このページの意味）</h2>
+        </div>
+        <p>AxiomForgeのツールは、すべて「すぐ使える」ことを前提に作られています。</p>
+        <p>このページでは、それぞれのツールの使い方や活用例を紹介します。</p>
+      </section>
+
+      <section class="card">
+        <div class="section-head">
+          <h2>② 雨音工房</h2>
+          <span class="badge">Ambient Mixer</span>
+        </div>
+        <p class="summary">環境音を自由に組み合わせて再生できるツールです。</p>
+
+        <h3>■ こんなときに使う</h3>
+        <ul>
+          <li>集中したいとき</li>
+          <li>寝る前のリラックス</li>
+          <li>作業用BGMが欲しいとき</li>
+        </ul>
+
+        <h3>■ 使い方</h3>
+        <ol>
+          <li>音を選ぶ</li>
+          <li>音量を調整</li>
+          <li>再生する</li>
+        </ol>
+
+        <div class="tips">
+          <h3>■ おすすめ使い方</h3>
+          <ul>
+            <li>雨 + 雷 → 集中用</li>
+            <li>雨 + カエル → リラックス用</li>
+          </ul>
+        </div>
+      </section>
+
+      <section class="card">
+        <div class="section-head">
+          <h2>③ 叫びマーモット</h2>
+          <span class="badge">Meme Tool</span>
+        </div>
+        <p class="summary">入力した文字を画像にして出力するネタツールです。</p>
+
+        <h3>■ こんなときに使う</h3>
+        <ul>
+          <li>SNS投稿のオチ</li>
+          <li>一言ネタ画像</li>
+          <li>軽いジョーク</li>
+        </ul>
+
+        <h3>■ 使い方</h3>
+        <ol>
+          <li>テキスト入力</li>
+          <li>生成ボタン</li>
+          <li>保存またはシェア</li>
+        </ol>
+
+        <div class="tips">
+          <h3>■ 活用例</h3>
+          <ul>
+            <li>日常の不満をネタ化</li>
+            <li>ちょっとしたボケ画像作成</li>
+          </ul>
+        </div>
+      </section>
+
+      <section class="card">
+        <div class="section-head">
+          <h2>④ SmartSuffix</h2>
+          <span class="badge">Text Formatter</span>
+        </div>
+        <p class="summary">テキストに装飾や整形を加えるツールです。</p>
+
+        <h3>■ こんなときに使う</h3>
+        <ul>
+          <li>SNS投稿前</li>
+          <li>メモ整理</li>
+          <li>文章を見やすくしたいとき</li>
+        </ul>
+
+        <h3>■ 使い方</h3>
+        <ol>
+          <li>テキストを入力</li>
+          <li>加工を選択</li>
+          <li>コピーして使う</li>
+        </ol>
+
+        <div class="tips">
+          <h3>■ 活用例</h3>
+          <ul>
+            <li>ハッシュタグ付き投稿</li>
+            <li>箇条書きメモ</li>
+          </ul>
+        </div>
+      </section>
+
+      <section class="card intro">
+        <div class="section-head">
+          <h2>⑤ まとめ</h2>
+        </div>
+        <p>AxiomForgeのツールはすべて、登録不要ですぐ使えることを重視しています。</p>
+        <p>思いついたときにすぐ使えるよう、シンプルな操作で完結する設計になっています。</p>
+      </section>
+    </div>
+
+    <p class="footer-note">気になるツールがあれば、そのまま TOP からすぐに試せます。</p>
+  </div>
+</body>
+</html>
