@@ -1,0 +1,13 @@
+{
+  "name": "叫びWAOFOX",
+  "short_name": "叫びWAOFOX",
+  "description": "WAOFOXに叫ばせよう",
+  "start_url": "/waofox/",
+  "scope": "/waofox/",
+  "display": "standalone",
+  "background_color": "#f5f5f0",
+  "theme_color": "#1a1a1a",
+  "icons": [
+    { "src": "/waofox/Gemini_Generated_Image_c7ubaec7ubaec7ub.png", "sizes": "any", "type": "image/png" }
+  ]
+}

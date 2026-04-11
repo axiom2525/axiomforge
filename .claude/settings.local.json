@@ -1,0 +1,9 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(awk 'NR>=51 && NR<=190' /c/Users/User/axiomforge/marmot/index.html)",
+      "Bash(awk 'NR>=100' /c/Users/User/axiomforge/marmot/index.html)",
+      "Bash(awk 'NR>=55 && NR<=100' /c/Users/User/axiomforge/marmot/index.html)"
+    ]
+  }
+}
