@@ -109,9 +109,9 @@ function autoDetectBubbles() {
 
   // 長い連続ダーク区間を持つ行・列からバウンディングボックスを検出
   function detectBubble(ax0, ax1) {
-    const ay1 = Math.floor(AH * 0.52); // 上半分のみスキャン
-    const minHRun = Math.max(4, Math.floor((ax1 - ax0) * 0.12));
-    const minVRun = Math.max(3, Math.floor(ay1 * 0.10));
+    const ay1 = Math.floor(AH * 0.43); // キャラより上のみスキャン
+    const minHRun = Math.max(5, Math.floor((ax1 - ax0) * 0.35)); // 吹き出し縁の長い連続のみ拾う
+    const minVRun = Math.max(3, Math.floor(ay1 * 0.12));
 
     // 上下端：水平方向の長い連続
     let topY = ay1, bottomY = 0;
