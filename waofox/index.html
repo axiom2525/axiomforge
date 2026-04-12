@@ -3,12 +3,12 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>叫びWAOFOX</title>
+<title>ワオキツネザルの憂鬱</title>
 <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-5808591005205512" crossorigin="anonymous"></script>
 <link rel="manifest" href="/waofox/waofox-manifest.json">
 <meta name="theme-color" content="#1a1a1a">
 <meta name="apple-mobile-web-app-capable" content="yes">
-<meta name="apple-mobile-web-app-title" content="叫びWAOFOX">
+<meta name="apple-mobile-web-app-title" content="ワオキツネザルの憂鬱">
 <link rel="apple-touch-icon" href="/waofox/Gemini_Generated_Image_c7ubaec7ubaec7ub.png">
 <style>
 * { box-sizing: border-box; margin: 0; padding: 0; }
@@ -57,16 +57,16 @@ button {
   <button class="btn-back" onclick="location.href='/'">← TOPに戻る</button>
   <button class="btn-pwa" id="btnPwa" onclick="installPwa()">＋ ホーム画面に追加</button>
 </div>
-<h1>叫びWAOFOX</h1>
-<p class="sub">WAOFOXに叫ばせよう</p>
+<h1>ワオキツネザルの憂鬱</h1>
+<p class="sub">親子の会話を完成させよう</p>
 <div class="input-area">
   <div class="input-col">
-    <div class="input-label">子ワオキツネザル（元気）</div>
+    <div class="input-label">子ワオキツネザル</div>
     <input type="text" id="txt1" maxlength="30" placeholder="叫ばせたい言葉…" oninput="draw()">
     <div class="char-hint" id="cnt1">0 / 30</div>
   </div>
   <div class="input-col">
-    <div class="input-label">親ワオキツネザル（不機嫌）</div>
+    <div class="input-label">親ワオキツネザル</div>
     <input type="text" id="txt2" maxlength="30" placeholder="叫ばせたい言葉…" oninput="draw()">
     <div class="char-hint" id="cnt2">0 / 30</div>
   </div>
@@ -90,13 +90,13 @@ img.src = '/waofox/Gemini_Generated_Image_c7ubaec7ubaec7ub.png';
 const BUBBLE1 = { cx: 0.50, cy: 0.155, w: 0.90, h: 0.237 };
 const BUBBLE2 = { cx: 0.62, cy: 0.421, w: 0.72, h: 0.252 };
 
-function drawBubbleText(ctx, txt, bubble, CW, CH) {
+function drawBubbleText(ctx, txt, bubble, CW, CH, maxFs) {
   if (!txt) return;
   const bcx = CW * bubble.cx;
   const bcy = CH * bubble.cy;
   const bw  = CW * bubble.w * 0.80;
   const bh  = CH * bubble.h * 0.70;
-  const lines = splitLines(txt, bw, bh, ctx);
+  const lines = splitLines(txt, bw, bh, ctx, maxFs);
   const lh = lines.fs * 1.25;
   const totalH = lh * lines.arr.length;
   ctx.font = `bold ${lines.fs}px sans-serif`;
@@ -131,8 +131,9 @@ function draw() {
   drawBubbleText(ctx, txt2, BUBBLE2, CW, CH);
 }
 
-function splitLines(txt, maxW, maxH, ctx) {
-  for (let fs = 60; fs >= 18; fs -= 3) {
+function splitLines(txt, maxW, maxH, ctx, maxFs) {
+  const startFs = maxFs || 60;
+  for (let fs = startFs; fs >= 18; fs -= 3) {
     ctx.font = `bold ${fs}px sans-serif`;
     const lh = fs * 1.25;
     if (ctx.measureText(txt).width <= maxW && lh <= maxH) return { arr: [txt], fs };
