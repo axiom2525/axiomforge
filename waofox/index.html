@@ -141,12 +141,15 @@ function autoDetectBubbles() {
       }
     }
 
-    // 実座標（0〜1）に変換
+    // 実座標（0〜1）に変換（上端が画像端に近い場合のcy補正）
+    const rawCy = ((topY + bottomY) / 2) / AH;
+    const rawH  = (bottomY - topY) / AH;
+    const correctedCy = topY <= 3 ? rawCy - rawH * 0.12 : rawCy;
     return {
       cx: ((leftX + rightX) / 2) / AW,
-      cy: ((topY + bottomY) / 2) / AH,
+      cy: correctedCy,
       w:  (rightX - leftX) / AW,
-      h:  (bottomY - topY) / AH
+      h:  rawH
     };
   }
 
