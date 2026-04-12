@@ -44,7 +44,7 @@ button {
 .toast {
   position: fixed; bottom: 32px; left: 50%;
   transform: translateX(-50%) translateY(20px);
-  background: #1a1a1a; color: #fff; padding: 12px 24px;
+  background: #1a1a1a; color: #fff; padding: 12.24px;
   border-radius: 8px; font-size: 14px;
   opacity: 0; transition: all 0.2s; pointer-events: none; z-index: 200;
   white-space: nowrap;
@@ -84,80 +84,20 @@ button {
 <script>
 const img = new Image();
 let ready = false;
-img.onload = () => { ready = true; autoDetectBubbles(); };
+img.onload = () => { ready = true; draw(); };
 img.src = '/waofox/Gemini_Generated_Image_c7ubaec7ubaec7ub.png';
 
-// 吹き出し位置（autoDetectBubblesで上書きされる）
-const BUBBLE1 = { cx: 0.26, cy: 0.21, w: 0.44, h: 0.36 };
-const BUBBLE2 = { cx: 0.74, cy: 0.21, w: 0.44, h: 0.36 };
-
-function autoDetectBubbles() {
-  // 解析用に縮小してピクセルデータ取得
-  const SCALE = 0.25;
-  const W = img.naturalWidth, H = img.naturalHeight;
-  const AW = Math.floor(W * SCALE), AH = Math.floor(H * SCALE);
-  const oc = document.createElement('canvas');
-  oc.width = AW; oc.height = AH;
-  const ox = oc.getContext('2d');
-  ox.drawImage(img, 0, 0, AW, AH);
-  const d = ox.getImageData(0, 0, AW, AH).data;
-
-  const isDark = (x, y) => {
-    const i = (y * AW + x) * 4;
-    return (0.299 * d[i] + 0.587 * d[i + 1] + 0.114 * d[i + 2]) < 120;
-  };
-
-  // 長い連続ダーク区間を持つ行・列からバウンディングボックスを検出
-  function detectBubble(ax0, ax1) {
-    const ay1 = Math.floor(AH * 0.43); // キャラより上のみスキャン
-    const minHRun = Math.max(5, Math.floor((ax1 - ax0) * 0.35)); // 吹き出し縁の長い連続のみ拾う
-    const minVRun = Math.max(3, Math.floor(ay1 * 0.12));
-
-    // 上下端：水平方向の長い連続
-    let topY = ay1, bottomY = 0;
-    for (let y = 0; y < ay1; y++) {
-      let run = 0, maxRun = 0;
-      for (let x = ax0; x < ax1; x++) {
-        if (isDark(x, y)) { run++; maxRun = Math.max(maxRun, run); }
-        else run = 0;
-      }
-      if (maxRun >= minHRun) {
-        if (y < topY) topY = y;
-        if (y > bottomY) bottomY = y;
-      }
-    }
-
-    // 左右端：垂直方向の長い連続（topY～bottomY内）
-    let leftX = ax1, rightX = ax0;
-    for (let x = ax0; x < ax1; x++) {
-      let run = 0, maxRun = 0;
-      for (let y = topY; y <= bottomY; y++) {
-        if (isDark(x, y)) { run++; maxRun = Math.max(maxRun, run); }
-        else run = 0;
-      }
-      if (maxRun >= minVRun) {
-        if (x < leftX) leftX = x;
-        if (x > rightX) rightX = x;
-      }
-    }
-
-    // 実座標（0〜1）に変換（上端が画像端に近い場合のcy補正）
-    const rawCy = ((topY + bottomY) / 2) / AH;
-    const rawH  = (bottomY - topY) / AH;
-    const correctedCy = topY <= 3 ? rawCy - rawH * 0.12 : rawCy;
-    return {
-      cx: ((leftX + rightX) / 2) / AW,
-      cy: correctedCy,
-      w:  (rightX - leftX) / AW,
-      h:  rawH
-    };
-  }
-
-  const midX = Math.floor(AW / 2);
-  Object.assign(BUBBLE1, detectBubble(0, midX));
-  Object.assign(BUBBLE2, detectBubble(midX, AW));
-  draw();
-}
+// -------------------------------------------------------
+// 吹き出し座標：ハードコード固定版
+// 画像を目視で計測。autoDetectBubblesは使わない。
+//
+// 上の吹き出し（左の子＝元気）
+//   横幅ほぼ全体、縦は画像上部～0.3あたり
+// 下の吹き出し（右の子＝不機嫌）
+//   同じく横幅ほぼ全体、少し下にオフセット
+// -------------------------------------------------------
+const BUBBLE1 = { cx: 0.42, cy: 0.155, w: 0.72, h: 0.24 };
+const BUBBLE2 = { cx: 0.60, cy: 0.335, w: 0.72, h: 0.24 };
 
 function drawBubbleText(ctx, txt, bubble, CW, CH) {
   if (!txt) return;
