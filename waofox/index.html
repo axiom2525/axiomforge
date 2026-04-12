@@ -61,12 +61,12 @@ button {
 <p class="sub">WAOFOXに叫ばせよう</p>
 <div class="input-area">
   <div class="input-col">
-    <div class="input-label">左のコ（元気）</div>
+    <div class="input-label">子ワオキツネザル（元気）</div>
     <input type="text" id="txt1" maxlength="30" placeholder="叫ばせたい言葉…" oninput="draw()">
     <div class="char-hint" id="cnt1">0 / 30</div>
   </div>
   <div class="input-col">
-    <div class="input-label">右のコ（不機嫌）</div>
+    <div class="input-label">親ワオキツネザル（不機嫌）</div>
     <input type="text" id="txt2" maxlength="30" placeholder="叫ばせたい言葉…" oninput="draw()">
     <div class="char-hint" id="cnt2">0 / 30</div>
   </div>
@@ -87,15 +87,6 @@ let ready = false;
 img.onload = () => { ready = true; draw(); };
 img.src = '/waofox/Gemini_Generated_Image_c7ubaec7ubaec7ub.png';
 
-// -------------------------------------------------------
-// 吹き出し座標：ハードコード固定版
-// 画像を目視で計測。autoDetectBubblesは使わない。
-//
-// 上の吹き出し（左の子＝元気）
-//   横幅ほぼ全体、縦は画像上部～0.3あたり
-// 下の吹き出し（右の子＝不機嫌）
-//   同じく横幅ほぼ全体、少し下にオフセット
-// -------------------------------------------------------
 const BUBBLE1 = { cx: 0.42, cy: 0.155, w: 0.72, h: 0.24 };
 const BUBBLE2 = { cx: 0.60, cy: 0.335, w: 0.72, h: 0.24 };
 
